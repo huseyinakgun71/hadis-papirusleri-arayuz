@@ -3,11 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Hadis Papirüsleri Veritabanı — Öğrenci Sorgulama Arayüzü</title>
+  <title>Hadis Papirüsleri Veritabanı — Araştırma & Sorgulama Portalı</title>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- SheetJS (XLSX okuyucu) -->
-  <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
   <!-- Arapça ve Türkçe Akademik Fontlar -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -48,79 +46,64 @@
     <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
       <div>
         <div class="flex items-center gap-2">
-          <span class="px-2 py-0.5 text-xs font-semibold uppercase tracking-wider bg-amber-700/60 text-amber-200 rounded">Akademik Araştırma Portalı</span>
-          <span id="dbStatusBadge" class="px-2 py-0.5 text-xs font-medium bg-red-900/70 text-red-200 rounded">Veritabanı Yüklenmedi</span>
+          <span class="px-2 py-0.5 text-xs font-semibold uppercase tracking-wider bg-amber-700/60 text-amber-200 rounded">
+            Öğrenci & Araştırmacı Sorgu Arayüzü
+          </span>
+          <span id="apiStatusBadge" class="px-2 py-0.5 text-xs font-medium bg-amber-900 text-amber-200 rounded">
+            Bağlanıyor...
+          </span>
         </div>
-        <h1 class="text-xl md:text-2xl font-bold tracking-tight mt-1 text-amber-50">Hadis Papirüsleri Veritabanı</h1>
-        <p class="text-xs text-amber-200/80">Erken Dönem Papirüs Nüshaları, İsnad Ağları ve Matbu Paralel Karşılaştırma Sistemi</p>
+        <h1 class="text-xl md:text-2xl font-bold tracking-tight mt-1 text-amber-50">
+          Hadis Papirüsleri Veritabanı
+        </h1>
+        <p class="text-xs text-amber-200/80">
+          Erken Dönem Papirüs Nüshaları, İsnad Ağları ve Matbu Paralel Sorgulama Sistemi
+        </p>
       </div>
 
-      <div class="flex items-center gap-3">
-        <label for="excelFileInput" class="cursor-pointer inline-flex items-center gap-2 bg-amber-600 hover:bg-amber-500 text-white font-medium text-sm px-4 py-2.5 rounded-lg shadow transition">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-          <span>Excel Dosyasını Yükle (.xlsx)</span>
-        </label>
-        <input type="file" id="excelFileInput" accept=".xlsx,.xls" class="hidden" />
+      <div class="text-xs text-amber-200/90 bg-black/25 px-3 py-2 rounded-lg border border-amber-500/20">
+        Sorgular sunucu üzerinden çalışır; kaynak dosya doğrudan açılmaz.
       </div>
     </div>
   </header>
 
-  <!-- Dosya Yükleme Karşılama Alanı (Veri yüklenene kadar görünür) -->
-  <main id="dropZoneContainer" class="flex-1 flex items-center justify-center p-6">
-    <div id="dropZone" class="max-w-xl w-full bg-white border-2 border-dashed border-amber-400 rounded-2xl p-10 text-center shadow-sm hover:border-amber-600 transition cursor-pointer">
-      <div class="w-16 h-16 bg-amber-100 text-amber-800 rounded-full flex items-center justify-center mx-auto mb-4">
-        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-      </div>
-      <h2 class="text-xl font-bold text-gray-800 mb-2">Veritabanı Dosyasını Seçin veya Sürükleyin</h2>
-      <p class="text-sm text-gray-600 mb-6">
-        Sorgulamaya başlamak için <code class="bg-amber-50 text-amber-900 px-1.5 py-0.5 rounded border border-amber-200 font-semibold">Hadis_Papirusleri_Veritabani.xlsx</code> dosyasını buraya bırakın. Tüm veriler tarayıcınızda işlenir.
-      </p>
-      <button onclick="document.getElementById('excelFileInput').click()" class="bg-amber-800 hover:bg-amber-700 text-white font-medium px-6 py-2.5 rounded-lg shadow transition">
-        Bilgisayardan Dosya Seç
-      </button>
-    </div>
-  </main>
+  <!-- Ana Uygulama Arayüzü -->
+  <main class="flex-1 flex flex-col max-w-7xl w-full mx-auto px-4 py-6 gap-6">
 
-  <!-- Ana Uygulama Arayüzü (Veri yüklendikten sonra açılır) -->
-  <div id="appContent" class="hidden flex-1 flex flex-col max-w-7xl w-full mx-auto px-4 py-6 gap-6">
+    <!-- Uyarı / Bilgilendirme Kutusu -->
+    <div id="alertBox" class="hidden p-4 rounded-xl border text-sm"></div>
 
     <!-- Özet İstatistik Kartları -->
     <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
       <div class="bg-white p-4 rounded-xl border border-amber-200/80 shadow-sm">
         <div class="text-xs text-gray-500 font-medium">Toplam Belge</div>
-        <div id="statBelgeler" class="text-2xl font-bold text-amber-900 mt-1">0</div>
+        <div id="statBelgeler" class="text-2xl font-bold text-amber-900 mt-1">—</div>
       </div>
       <div class="bg-white p-4 rounded-xl border border-amber-200/80 shadow-sm">
         <div class="text-xs text-gray-500 font-medium">Toplam Rivayet</div>
-        <div id="statRivayetler" class="text-2xl font-bold text-amber-900 mt-1">0</div>
+        <div id="statRivayetler" class="text-2xl font-bold text-amber-900 mt-1">—</div>
       </div>
       <div class="bg-white p-4 rounded-xl border border-amber-200/80 shadow-sm">
         <div class="text-xs text-gray-500 font-medium">Matbu Paralel Kaydı</div>
-        <div id="statParaleller" class="text-2xl font-bold text-amber-900 mt-1">0</div>
+        <div id="statParaleller" class="text-2xl font-bold text-amber-900 mt-1">—</div>
       </div>
       <div class="bg-white p-4 rounded-xl border border-amber-200/80 shadow-sm">
         <div class="text-xs text-gray-500 font-medium">Kayıtlı Râvi</div>
-        <div id="statRaviler" class="text-2xl font-bold text-amber-900 mt-1">0</div>
+        <div id="statRaviler" class="text-2xl font-bold text-amber-900 mt-1">—</div>
       </div>
       <div class="bg-white p-4 rounded-xl border border-amber-200/80 shadow-sm col-span-2 md:col-span-1">
         <div class="text-xs text-gray-500 font-medium">Görüntüyle Kontrol Edilen</div>
-        <div id="statKontrol" class="text-2xl font-bold text-emerald-700 mt-1">0</div>
+        <div id="statKontrol" class="text-2xl font-bold text-emerald-700 mt-1">—</div>
       </div>
     </div>
 
     <!-- Sekme Menüsü -->
     <nav class="bg-white rounded-xl border border-amber-200/80 shadow-sm overflow-x-auto flex">
       <button data-tab="hadisBul" class="tab-btn tab-active px-5 py-3.5 text-sm whitespace-nowrap transition flex items-center gap-2">
-        <span>🔍 Hadis Bul (Metin & İskelet Arama)</span>
-      </button>
-      <button data-tab="rivayetler" class="tab-btn px-5 py-3.5 text-sm text-gray-600 hover:bg-amber-50 whitespace-nowrap transition">
-        📜 Tüm Rivayetler
+        <span>🔍 Hadis Sorgula (Metin & İskelet)</span>
       </button>
       <button data-tab="belgeler" class="tab-btn px-5 py-3.5 text-sm text-gray-600 hover:bg-amber-50 whitespace-nowrap transition">
         🏺 Papirüs Belgeleri
-      </button>
-      <button data-tab="paraleller" class="tab-btn px-5 py-3.5 text-sm text-gray-600 hover:bg-amber-50 whitespace-nowrap transition">
-        📚 Matbu Paraleller
       </button>
       <button data-tab="raviler" class="tab-btn px-5 py-3.5 text-sm text-gray-600 hover:bg-amber-50 whitespace-nowrap transition">
         👤 Râviler & Tabakât
@@ -128,21 +111,24 @@
       <button data-tab="kilavuz" class="tab-btn px-5 py-3.5 text-sm text-gray-600 hover:bg-amber-50 whitespace-nowrap transition">
         ℹ️ İşaretler & Kısaltmalar
       </button>
+      <button data-tab="atif" class="tab-btn px-5 py-3.5 text-sm text-gray-600 hover:bg-amber-50 whitespace-nowrap transition">
+        📌 Atıf & Kullanım Koşulları
+      </button>
     </nav>
 
     <!-- SEKMELER -->
 
-    <!-- 1. HADİS BUL SEKMESİ -->
+    <!-- 1. HADİS SORGULA SEKMESİ -->
     <section id="tab-hadisBul" class="tab-panel space-y-5">
       <div class="bg-white p-6 rounded-xl border border-amber-200/80 shadow-sm">
-        <h2 class="text-lg font-bold text-gray-800 mb-1">Hadis Metni veya İbare Sorgulama</h2>
+        <h2 class="text-lg font-bold text-gray-800 mb-1">Hadis Metni, İsnad veya İbare Sorgulama</h2>
         <p class="text-xs text-gray-600 mb-4">
-          Matbu bir hadisten 2-5 kelimelik Arapça ibare yapıştırın (hareke, hemze, elif ve noktalama otomatik temizlenerek iskelet üzerinden aranır) veya Türkçe konu/râvi adı yazın.
+          Matbu bir hadisten 2-5 kelimelik Arapça ibare yapıştırın (hareke, hemze, elif ve noktalama otomatik temizlenerek iskelet üzerinden aranır) veya Türkçe konu/râvi adı/rivayet kodu yazın.
         </p>
 
         <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
           <div class="md:col-span-7 relative">
-            <input type="text" id="hadisBulInput" placeholder="Arapça ibare (örn: من أحب أن يبسط) veya Türkçe kelime..." class="w-full pl-4 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-600 focus:border-amber-600 text-base" />
+            <input type="text" id="hadisBulInput" placeholder="Arapça ibare (örn: من أحب أن يبسط) veya Türkçe kelime / kod..." class="w-full pl-4 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-600 focus:border-amber-600 text-base" />
             <button id="clearHadisBul" class="hidden absolute right-3 top-3.5 text-gray-400 hover:text-gray-600 text-sm">✕</button>
           </div>
           <div class="md:col-span-3">
@@ -176,93 +162,34 @@
       </div>
 
       <div class="flex items-center justify-between">
-        <h3 id="hadisBulCount" class="text-sm font-semibold text-gray-700">Sonuçlar yükleniyor...</h3>
+        <h3 id="hadisBulCount" class="text-sm font-semibold text-gray-700">Sorgu bekleniyor...</h3>
       </div>
 
       <div id="hadisBulResults" class="space-y-4"></div>
     </section>
 
-    <!-- 2. TÜM RİVAYETLER SEKMESİ -->
-    <section id="tab-rivayetler" class="tab-panel hidden space-y-4">
-      <div class="bg-white p-4 rounded-xl border border-amber-200/80 shadow-sm grid grid-cols-1 md:grid-cols-4 gap-3">
-        <input type="text" id="rivayetSearch" placeholder="Kod, konu, isnad veya metin ara..." class="px-3 py-2 border border-gray-300 rounded-lg text-sm" />
-        <select id="rivayetBelgeFilter" class="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white">
-          <option value="">Belge Kodu (Tümü)</option>
-        </select>
-        <select id="rivayetKailFilter" class="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white">
-          <option value="">Kâil / Sahâbî (Tümü)</option>
-        </select>
-        <select id="rivayetKontrolFilter" class="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white">
-          <option value="">Kontrol Düzeyi (Tümü)</option>
-        </select>
-      </div>
-
-      <div class="bg-white rounded-xl border border-amber-200/80 shadow-sm overflow-x-auto">
-        <table class="w-full text-left border-collapse text-sm">
-          <thead>
-            <tr class="bg-amber-50 border-b border-amber-200 text-amber-950 font-semibold">
-              <th class="p-3">Rivayet Kodu</th>
-              <th class="p-3">Belge / Yer</th>
-              <th class="p-3">Konu & Tür</th>
-              <th class="p-3">İsnad (Transkripsiyon)</th>
-              <th class="p-3 text-right">Tarafü'l-Hadîs (Arapça)</th>
-              <th class="p-3">İşlem</th>
-            </tr>
-          </thead>
-          <tbody id="rivayetTableBody" class="divide-y divide-gray-200"></tbody>
-        </table>
-      </div>
-      <div id="rivayetPagination" class="flex items-center justify-between text-sm text-gray-600"></div>
-    </section>
-
-    <!-- 3. PAPİRÜS BELGELERİ SEKMESİ -->
+    <!-- 2. PAPİRÜS BELGELERİ SEKMESİ -->
     <section id="tab-belgeler" class="tab-panel hidden space-y-4">
       <div class="bg-white p-4 rounded-xl border border-amber-200/80 shadow-sm flex flex-col md:flex-row gap-3">
         <input type="text" id="belgeSearch" placeholder="Belge kodu, koleksiyon, şehir, tarih veya muhteva ara..." class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm" />
         <select id="belgeSehirFilter" class="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white md:w-56">
           <option value="">Tüm Şehirler</option>
         </select>
+        <button id="belgeSearchBtn" class="px-4 py-2 bg-amber-800 hover:bg-amber-700 text-white rounded-lg text-sm font-medium">Ara</button>
       </div>
       <div id="belgelerGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
     </section>
 
-    <!-- 4. MATBU PARALELLER SEKMESİ -->
-    <section id="tab-paraleller" class="tab-panel hidden space-y-4">
-      <div class="bg-white p-4 rounded-xl border border-amber-200/80 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-3">
-        <input type="text" id="paralelSearch" placeholder="Rivayet kodu, eser adı, hadis no veya ortak râvi ara..." class="px-3 py-2 border border-gray-300 rounded-lg text-sm" />
-        <select id="paralelEserTurFilter" class="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white">
-          <option value="">Eser Türü (Tümü)</option>
-        </select>
-        <select id="paralelLafizFilter" class="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white">
-          <option value="">Lafız İlişkisi (Tümü)</option>
-        </select>
-      </div>
-      <div class="bg-white rounded-xl border border-amber-200/80 shadow-sm overflow-x-auto">
-        <table class="w-full text-left border-collapse text-sm">
-          <thead>
-            <tr class="bg-amber-50 border-b border-amber-200 text-amber-950 font-semibold">
-              <th class="p-3">Rivayet Kodu</th>
-              <th class="p-3">Matbu Eser</th>
-              <th class="p-3">Cilt/Sayfa & No</th>
-              <th class="p-3">Kesişme Noktası (Tarik)</th>
-              <th class="p-3">Lafız İlişkisi</th>
-              <th class="p-3">Detay</th>
-            </tr>
-          </thead>
-          <tbody id="paralelTableBody" class="divide-y divide-gray-200"></tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- 5. RÂVİLER SEKMESİ -->
+    <!-- 3. RÂVİLER SEKMESİ -->
     <section id="tab-raviler" class="tab-panel hidden space-y-4">
       <div class="bg-white p-4 rounded-xl border border-amber-200/80 shadow-sm flex flex-col md:flex-row gap-3">
         <input type="text" id="raviSearch" placeholder="Râvi adı, vefat yılı, bölge veya Takrîb değerlendirmesi ara..." class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm" />
+        <button id="raviSearchBtn" class="px-4 py-2 bg-amber-800 hover:bg-amber-700 text-white rounded-lg text-sm font-medium">Ara</button>
       </div>
       <div id="ravilerGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
     </section>
 
-    <!-- 6. İŞARETLER & KISALTMALAR SEKMESİ -->
+    <!-- 4. İŞARETLER & KISALTMALAR SEKMESİ -->
     <section id="tab-kilavuz" class="tab-panel hidden space-y-4">
       <div class="bg-white p-6 rounded-xl border border-amber-200/80 shadow-sm">
         <h2 class="text-lg font-bold text-gray-800 mb-3">Veritabanı İşaretleri, Kısaltmalar ve Kaynaklar</h2>
@@ -281,7 +208,33 @@
       </div>
     </section>
 
-  </div>
+    <!-- 5. ATIF & KULLANIM KOŞULLARI SEKMESİ -->
+    <section id="tab-atif" class="tab-panel hidden space-y-4">
+      <div class="bg-white p-6 rounded-xl border border-amber-200/80 shadow-sm space-y-4 text-sm text-gray-700 leading-relaxed">
+        <h2 class="text-lg font-bold text-gray-900">Araştırmacılar İçin Atıf ve Kullanım Koşulları</h2>
+        <div class="bg-amber-50 border border-amber-200 p-4 rounded-xl">
+          <div class="font-semibold text-amber-950 mb-1">Önerilen Akademik Atıf</div>
+          <p class="font-mono text-xs text-gray-800">
+            [Yazar/Araştırmacı Adı], <em>Hadis Papirüsleri Veritabanı</em> (Web Sorgu Arayüzü, erişim tarihi: <span id="accessDate"></span>).
+          </p>
+        </div>
+        <ul class="list-disc pl-5 space-y-1.5">
+          <li>Bu arayüz, öğrencilerin ve araştırmacıların ilgili rivayet, isnad, belge ve paralel kayıtlarını sorgulaması amacıyla sunulmaktadır.</li>
+          <li>Veritabanı kayıtlarının bütün olarak kopyalanması, izinsiz yeniden yayımlanması veya ticari amaçlarla/izin dışı veri madenciliğiyle kullanılması yasaktır.</li>
+          <li>Araştırmalarda kullanılan rivayet veya belge kayıtlarında ilgili papirüs künyesi ve çalışma açıkça kaynak gösterilmelidir.</li>
+        </ul>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Altbilgi -->
+  <footer class="bg-stone-900 text-stone-300 text-xs py-4 px-4 mt-8">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+      <span>Hadis Papirüsleri Veritabanı — Öğrenci & Araştırmacı Sorgu Arayüzü</span>
+      <span>Yalnızca sorgulama erişimi • Kaynak dosya korunmaktadır</span>
+    </div>
+  </footer>
 
   <!-- Rivayet Detay Modalı -->
   <div id="detailModal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 overflow-y-auto">
@@ -298,157 +251,92 @@
   </div>
 
   <script>
-    // Global Veritabanı State
-    const DB = {
-      belgeler: [],
-      rivayetler: [],
-      paraleller: [],
-      raviler: [],
-      kaynaklar: [],
-      belgeMap: {},
-      paralelMap: {}
-    };
+    // BURAYA GOOGLE APPS SCRIPT WEB APP URL'NİZİ YAZIN
+    const API_URL = 'BURAYA_APPS_SCRIPT_WEB_APP_URL_YAZIN';
 
-    let currentRivayetPage = 1;
-    const ITEMS_PER_PAGE = 30;
+    let searchTimer = null;
+    const loadedTabs = { belgeler: false, raviler: false, kilavuz: false };
 
-    // Arapça Metin İskeletleştirme (Excel'deki formül mantığıyla uyumlu)
+    document.getElementById('accessDate').textContent = new Date().toLocaleDateString('tr-TR');
+
+    function escapeHtml(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    // Arapça Metin İskeletleştirme
     function toArabicSkeleton(text) {
       if (!text) return '';
-      return text
-        .toString()
-        // Hareke ve tenvinleri kaldır
+      return String(text)
         .replace(/[\u064B-\u065F\u0670]/g, '')
-        // Tatweel (uzatma çizgisi) kaldır
         .replace(/\u0640/g, '')
-        // Köşeli parantez ve noktalama işaretlerini temizle
         .replace(/[\[\]\(\)\{\}«»"“”'،؛؟\.,!:\-—–…∗†‡]/g, ' ')
-        // Elif ve hemze varyantlarını normalize et (Excel iskelet sütununda elifsiz/hemzesiz yapı var)
         .replace(/[أإآاٱءؤئ]/g, '')
-        // Yâ / Elif-i maksûre ve Tâ-i merbûta normalizasyonu
         .replace(/ى/g, 'ي')
         .replace(/ة/g, 'ه')
         .replace(/\s+/g, ' ')
         .trim();
     }
 
-    // Dosya Yükleme ve Sürükle-Bırak Dinleyicileri
-    const fileInput = document.getElementById('excelFileInput');
-    const dropZone = document.getElementById('dropZone');
-
-    fileInput.addEventListener('change', (e) => {
-      if (e.target.files.length > 0) handleExcelFile(e.target.files[0]);
-    });
-
-    dropZone.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      dropZone.classList.add('bg-amber-50', 'border-amber-700');
-    });
-    dropZone.addEventListener('dragleave', () => {
-      dropZone.classList.remove('bg-amber-50', 'border-amber-700');
-    });
-    dropZone.addEventListener('drop', (e) => {
-      e.preventDefault();
-      dropZone.classList.remove('bg-amber-50', 'border-amber-700');
-      if (e.dataTransfer.files.length > 0) handleExcelFile(e.dataTransfer.files[0]);
-    });
-
-    function handleExcelFile(file) {
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const data = new Uint8Array(e.target.result);
-        const workbook = XLSX.read(data, { type: 'array' });
-
-        // Sayfaları JSON'a dönüştür
-        DB.belgeler = XLSX.utils.sheet_to_json(workbook.Sheets['Belgeler'] || {}, { defval: '' });
-        DB.rivayetler = XLSX.utils.sheet_to_json(workbook.Sheets['Rivayetler'] || {}, { defval: '' });
-        DB.paraleller = XLSX.utils.sheet_to_json(workbook.Sheets['Paraleller'] || {}, { defval: '' });
-        DB.raviler = XLSX.utils.sheet_to_json(workbook.Sheets['Râviler'] || {}, { defval: '' });
-        DB.kaynaklar = XLSX.utils.sheet_to_json(workbook.Sheets['Kaynaklar ve kodlar'] || {}, { defval: '' });
-
-        // İlişkisel haritaları oluştur
-        DB.belgeMap = {};
-        DB.belgeler.forEach(b => {
-          if (b['Belge kodu']) DB.belgeMap[b['Belge kodu'].trim()] = b;
-        });
-
-        DB.paralelMap = {};
-        DB.paraleller.forEach(p => {
-          const code = (p['Rivayet kodu'] || '').trim();
-          if (!code) return;
-          if (!DB.paralelMap[code]) DB.paralelMap[code] = [];
-          DB.paralelMap[code].push(p);
-        });
-
-        initApp();
-      };
-      reader.readAsArrayBuffer(file);
+    function showAlert(msg, type = 'warn') {
+      const box = document.getElementById('alertBox');
+      box.classList.remove('hidden', 'bg-red-50', 'border-red-300', 'text-red-900', 'bg-amber-50', 'border-amber-300', 'text-amber-900');
+      if (type === 'error') {
+        box.classList.add('bg-red-50', 'border-red-300', 'text-red-900');
+      } else {
+        box.classList.add('bg-amber-50', 'border-amber-300', 'text-amber-900');
+      }
+      box.textContent = msg;
     }
 
-    function initApp() {
-      // UI Geçişi
-      document.getElementById('dropZoneContainer').classList.add('hidden');
-      document.getElementById('appContent').classList.remove('hidden');
-      const badge = document.getElementById('dbStatusBadge');
-      badge.textContent = 'Veritabanı Aktif';
-      badge.className = 'px-2 py-0.5 text-xs font-medium bg-emerald-800 text-emerald-100 rounded';
-
-      // İstatistikleri Güncelle
-      document.getElementById('statBelgeler').textContent = DB.belgeler.length;
-      document.getElementById('statRivayetler').textContent = DB.rivayetler.length;
-      document.getElementById('statParaleller').textContent = DB.paraleller.length;
-      document.getElementById('statRaviler').textContent = DB.raviler.length;
-      const kontrolEdilen = DB.rivayetler.filter(r => String(r['Kontrol düzeyi']).startsWith('1')).length;
-      document.getElementById('statKontrol').textContent = kontrolEdilen;
-
-      populateFilters();
-      runHadisBul();
-      renderRivayetler();
-      renderBelgeler();
-      renderParaleller();
-      renderRaviler();
-      renderKilavuz();
+    async function callAPI(paramsObj) {
+      if (!API_URL || API_URL.includes('BURAYA_APPS_SCRIPT')) {
+        throw new Error('Henüz Apps Script Web App URL tanımlanmadı. Kodun alt kısmındaki API_URL alanını güncelleyin.');
+      }
+      const url = new URL(API_URL);
+      Object.entries(paramsObj).forEach(([k, v]) => {
+        if (v !== undefined && v !== null && String(v) !== '') {
+          url.searchParams.set(k, v);
+        }
+      });
+      const res = await fetch(url.toString());
+      if (!res.ok) throw new Error(`Ağ hatası (${res.status})`);
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || 'Sorgu başarısız oldu.');
+      return data;
     }
 
-    function populateFilters() {
-      // Belge kodları
-      const belgeCodes = [...new Set(DB.belgeler.map(b => b['Belge kodu']).filter(Boolean))].sort();
-      const hbBelge = document.getElementById('hadisBulBelgeFilter');
-      const rivBelge = document.getElementById('rivayetBelgeFilter');
-      belgeCodes.forEach(c => {
-        hbBelge.innerHTML += `<option value="${c}">${c}</option>`;
-        rivBelge.innerHTML += `<option value="${c}">${c}</option>`;
-      });
+    async function loadStatsAndFilters() {
+      const badge = document.getElementById('apiStatusBadge');
+      try {
+        const data = await callAPI({ action: 'stats' });
+        const s = data.stats || {};
+        document.getElementById('statBelgeler').textContent = s.belgeler ?? '—';
+        document.getElementById('statRivayetler').textContent = s.rivayetler ?? '—';
+        document.getElementById('statParaleller').textContent = s.paraleller ?? '—';
+        document.getElementById('statRaviler').textContent = s.raviler ?? '—';
+        document.getElementById('statKontrol').textContent = s.kontrolEdilen ?? '—';
 
-      // Kâil listesi
-      const kailList = [...new Set(DB.rivayetler.map(r => r['Kâil']).filter(Boolean))].sort();
-      const rivKail = document.getElementById('rivayetKailFilter');
-      kailList.forEach(k => {
-        rivKail.innerHTML += `<option value="${k}">${k}</option>`;
-      });
+        const hbBelge = document.getElementById('hadisBulBelgeFilter');
+        (data.belgeKodlari || []).forEach(c => {
+          hbBelge.innerHTML += `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`;
+        });
 
-      // Kontrol düzeyi
-      const kontrolList = [...new Set(DB.rivayetler.map(r => r['Kontrol düzeyi']).filter(Boolean))].sort();
-      const rivKontrol = document.getElementById('rivayetKontrolFilter');
-      kontrolList.forEach(k => {
-        rivKontrol.innerHTML += `<option value="${k}">${k}</option>`;
-      });
+        const belgeSehir = document.getElementById('belgeSehirFilter');
+        (data.sehirler || []).forEach(sec => {
+          belgeSehir.innerHTML += `<option value="${escapeHtml(sec)}">${escapeHtml(sec)}</option>`;
+        });
 
-      // Şehirler
-      const sehirList = [...new Set(DB.belgeler.map(b => b['Şehir']).filter(Boolean))].sort();
-      const belgeSehir = document.getElementById('belgeSehirFilter');
-      sehirList.forEach(s => {
-        belgeSehir.innerHTML += `<option value="${s}">${s}</option>`;
-      });
-
-      // Paralel Eser Türü & Lafız İlişkisi
-      const eserTurleri = [...new Set(DB.paraleller.map(p => p['Eser türü']).filter(Boolean))].sort();
-      const pTur = document.getElementById('paralelEserTurFilter');
-      eserTurleri.forEach(t => pTur.innerHTML += `<option value="${t}">${t}</option>`);
-
-      const lafizList = [...new Set(DB.paraleller.map(p => p['Lafız ilişkisi']).filter(Boolean))].sort();
-      const pLafiz = document.getElementById('paralelLafizFilter');
-      lafizList.forEach(l => pLafiz.innerHTML += `<option value="${l}">${l}</option>`);
+        badge.textContent = 'API Bağlı';
+        badge.className = 'px-2 py-0.5 text-xs font-medium bg-emerald-800 text-emerald-100 rounded';
+      } catch (err) {
+        badge.textContent = 'Bağlantı Bekleniyor';
+        badge.className = 'px-2 py-0.5 text-xs font-medium bg-red-900 text-red-100 rounded';
+        showAlert(err.message, 'warn');
+      }
     }
 
     // Sekme Geçişleri
@@ -464,23 +352,40 @@
         const target = btn.dataset.tab;
         document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
         document.getElementById('tab-' + target).classList.remove('hidden');
+
+        if (target === 'belgeler' && !loadedTabs.belgeler) {
+          loadedTabs.belgeler = true;
+          renderBelgeler();
+        } else if (target === 'raviler' && !loadedTabs.raviler) {
+          loadedTabs.raviler = true;
+          renderRaviler();
+        } else if (target === 'kilavuz' && !loadedTabs.kilavuz) {
+          loadedTabs.kilavuz = true;
+          renderKilavuz();
+        }
       });
     });
 
-    // 1. HADİS BUL ARAMA MANTIĞI
+    // 1. HADİS SORGULA
     const hadisBulInput = document.getElementById('hadisBulInput');
     const clearHadisBul = document.getElementById('clearHadisBul');
     const skeletonPreview = document.getElementById('skeletonPreview');
 
     hadisBulInput.addEventListener('input', () => {
-      clearHadisBul.classList.toggle('hidden', !hadisBulInput.value);
-      runHadisBul();
+      const q = hadisBulInput.value.trim();
+      clearHadisBul.classList.toggle('hidden', !q);
+      skeletonPreview.textContent = /[\u0600-\u06FF]/.test(q) ? (toArabicSkeleton(q) || '—') : '—';
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(runHadisBul, 250);
     });
+
     clearHadisBul.addEventListener('click', () => {
       hadisBulInput.value = '';
       clearHadisBul.classList.add('hidden');
+      skeletonPreview.textContent = '—';
       runHadisBul();
     });
+
     document.getElementById('hadisBulBelgeFilter').addEventListener('change', runHadisBul);
     document.getElementById('hadisBulTurFilter').addEventListener('change', runHadisBul);
 
@@ -488,309 +393,194 @@
       btn.addEventListener('click', () => {
         hadisBulInput.value = btn.dataset.q;
         clearHadisBul.classList.remove('hidden');
+        skeletonPreview.textContent = /[\u0600-\u06FF]/.test(btn.dataset.q) ? (toArabicSkeleton(btn.dataset.q) || '—') : '—';
         runHadisBul();
       });
     });
 
-    function runHadisBul() {
-      const rawQuery = hadisBulInput.value.trim();
-      const belgeFilter = document.getElementById('hadisBulBelgeFilter').value;
-      const turFilter = document.getElementById('hadisBulTurFilter').value;
-
-      const isArabic = /[\u0600-\u06FF]/.test(rawQuery);
-      const skeletonQuery = isArabic ? toArabicSkeleton(rawQuery) : '';
-      skeletonPreview.textContent = skeletonQuery || '—';
-
-      let matches = DB.rivayetler.filter(r => {
-        if (belgeFilter && r['Belge kodu'] !== belgeFilter) return false;
-        if (turFilter && !String(r['Tür (M/Mv/Mk)']).startsWith(turFilter)) return false;
-
-        if (!rawQuery) return true;
-
-        if (isArabic && skeletonQuery) {
-          const targetSkeleton = toArabicSkeleton(
-            (r['Arama metni (iskelet: harekesiz, elifsiz; papirüs + paralel lafızları)'] || '') + ' ' +
-            (r["Tarafü'l-hadîs (Arapça)"] || '') + ' ' +
-            (r['İsnad (Arapça, papirüsteki okuma)'] || '')
-          );
-          return targetSkeleton.includes(skeletonQuery);
-        } else {
-          const qLower = rawQuery.toLocaleLowerCase('tr-TR');
-          const searchable = [
-            r['Rivayet kodu'],
-            r['Belge kodu'],
-            r['Konu'],
-            r['İsnad (transkripsiyon)'],
-            r['Kâil'],
-            r['Not']
-          ].join(' ').toLocaleLowerCase('tr-TR');
-          return searchable.includes(qLower);
-        }
-      });
-
+    async function runHadisBul() {
+      const q = hadisBulInput.value.trim();
+      const belge = document.getElementById('hadisBulBelgeFilter').value;
+      const tur = document.getElementById('hadisBulTurFilter').value;
       const countEl = document.getElementById('hadisBulCount');
       const container = document.getElementById('hadisBulResults');
 
-      if (!rawQuery && !belgeFilter && !turFilter) {
-        countEl.textContent = `Öne Çıkan İlk 15 Rivayet Gösteriliyor (Toplam ${matches.length} kayıt)`;
-        matches = matches.slice(0, 15);
-      } else {
-        countEl.textContent = `Bulunan Eşleşme: ${matches.length} rivayet ${matches.length > 50 ? '(İlk 50 gösteriliyor)' : ''}`;
-        matches = matches.slice(0, 50);
-      }
+      countEl.textContent = 'Sorgulanıyor...';
+      try {
+        const data = await callAPI({ action: 'search', q, belge, tur, limit: 25 });
+        const matches = data.items || [];
+        countEl.textContent = `Bulunan Eşleşme: ${data.totalMatches ?? matches.length} rivayet (${matches.length} kayıt gösteriliyor)`;
 
-      if (matches.length === 0) {
-        container.innerHTML = `
-          <div class="bg-white p-8 rounded-xl border border-amber-200 text-center text-gray-500">
-            Aramanızla eşleşen papirüs rivayeti bulunamadı. Daha kısa bir ibare (2-3 kelime) veya farklı bir anahtar kelime deneyin.
-          </div>`;
-        return;
-      }
+        if (matches.length === 0) {
+          container.innerHTML = `
+            <div class="bg-white p-8 rounded-xl border border-amber-200 text-center text-gray-500">
+              Aramanızla eşleşen papirüs rivayeti bulunamadı. Daha kısa bir ibare (2-3 kelime) veya farklı bir anahtar kelime deneyin.
+            </div>`;
+          return;
+        }
 
-      container.innerHTML = matches.map(r => {
-        const belge = DB.belgeMap[r['Belge kodu']] || {};
-        const paraleller = DB.paralelMap[r['Rivayet kodu']] || [];
-        return `
+        container.innerHTML = matches.map(r => `
           <div class="bg-white p-5 rounded-xl border border-amber-200/90 shadow-sm hover:border-amber-500 transition">
             <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-gray-100">
               <div class="flex flex-wrap items-center gap-2">
-                <span class="font-bold text-amber-950 bg-amber-100 px-2.5 py-1 rounded text-sm">${r['Rivayet kodu']}</span>
-                <span class="text-xs font-medium bg-stone-100 text-stone-700 px-2 py-1 rounded">${r['Belge kodu']} (${r['Yüz/satır'] || '-'})</span>
-                ${belge['Tarih'] ? `<span class="text-xs font-medium bg-blue-50 text-blue-800 px-2 py-1 rounded">📅 ${belge['Tarih']}</span>` : ''}
-                ${r['Tür (M/Mv/Mk)'] ? `<span class="text-xs font-medium bg-purple-50 text-purple-800 px-2 py-1 rounded">${r['Tür (M/Mv/Mk)']}</span>` : ''}
-                ${r['Konu'] ? `<span class="text-xs font-semibold text-amber-800">• ${r['Konu']}</span>` : ''}
+                <span class="font-bold text-amber-950 bg-amber-100 px-2.5 py-1 rounded text-sm">${escapeHtml(r.rivayetKodu)}</span>
+                <span class="text-xs font-medium bg-stone-100 text-stone-700 px-2 py-1 rounded">${escapeHtml(r.belgeKodu)} (${escapeHtml(r.yuzSatir || '-')})</span>
+                ${r.tarih ? `<span class="text-xs font-medium bg-blue-50 text-blue-800 px-2 py-1 rounded">📅 ${escapeHtml(r.tarih)}</span>` : ''}
+                ${r.tur ? `<span class="text-xs font-medium bg-purple-50 text-purple-800 px-2 py-1 rounded">${escapeHtml(r.tur)}</span>` : ''}
+                ${r.konu ? `<span class="text-xs font-semibold text-amber-800">• ${escapeHtml(r.konu)}</span>` : ''}
               </div>
-              <button onclick="openRivayetModal('${r['Rivayet kodu']}')" class="text-xs font-semibold bg-amber-800 hover:bg-amber-700 text-white px-3 py-1.5 rounded-lg transition">
-                İncele & Paraleller (${paraleller.length}) →
+              <button onclick="openRivayetModal('${escapeHtml(r.rivayetKodu)}')" class="text-xs font-semibold bg-amber-800 hover:bg-amber-700 text-white px-3 py-1.5 rounded-lg transition">
+                İncele & Paraleller →
               </button>
             </div>
 
             <div class="mt-3 space-y-2">
-              ${r['İsnad (Arapça, papirüsteki okuma)'] ? `
+              ${r.isnadArapca ? `
                 <div class="bg-stone-50 p-2.5 rounded-lg border border-stone-200/70">
                   <div class="text-[11px] font-semibold text-stone-500 uppercase mb-0.5">Papirüsteki İsnad</div>
-                  <div class="arabic-text text-stone-700 text-lg">${r['İsnad (Arapça, papirüsteki okuma)']}</div>
+                  <div class="arabic-text text-stone-700 text-lg">${escapeHtml(r.isnadArapca)}</div>
                 </div>` : ''}
-              
+
               <div class="bg-amber-50/60 p-3 rounded-lg border border-amber-200/60">
                 <div class="flex justify-between items-center mb-0.5">
                   <span class="text-[11px] font-semibold text-amber-800 uppercase">Tarafü'l-Hadîs (Metin)</span>
-                  <span class="text-[11px] text-gray-500">Başın kaynağı: ${r['Başın kaynağı'] || '-'}</span>
+                  <span class="text-[11px] text-gray-500">Başın kaynağı: ${escapeHtml(r.basinKaynagi || '-')}</span>
                 </div>
-                <div class="arabic-text text-gray-900 font-bold">${r["Tarafü'l-hadîs (Arapça)"] || '—'}</div>
+                <div class="arabic-text text-gray-900 font-bold">${escapeHtml(r.tarafArapca || '—')}</div>
               </div>
             </div>
 
             <div class="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-gray-600">
-              <div><strong>İsnad Zinciri:</strong> ${r['İsnad (transkripsiyon)'] || '—'}</div>
-              <div><strong>Kontrol:</strong> ${r['Kontrol düzeyi'] || '—'}</div>
+              <div><strong>İsnad Zinciri:</strong> ${escapeHtml(r.isnadTranskripsiyon || '—')}</div>
+              <div><strong>Kontrol:</strong> ${escapeHtml(r.kontrolDuzeyi || '—')}</div>
             </div>
           </div>
-        `;
-      }).join('');
+        `).join('');
+      } catch (err) {
+        countEl.textContent = 'Sorgu yapılamadı.';
+        container.innerHTML = `<div class="bg-white p-6 rounded-xl border border-red-200 text-red-700 text-sm">${escapeHtml(err.message)}</div>`;
+      }
     }
 
-    // 2. TÜM RİVAYETLER TABLOSU
-    ['rivayetSearch', 'rivayetBelgeFilter', 'rivayetKailFilter', 'rivayetKontrolFilter'].forEach(id => {
-      document.getElementById(id).addEventListener('input', () => {
-        currentRivayetPage = 1;
-        renderRivayetler();
-      });
-    });
-
-    function renderRivayetler() {
-      const q = document.getElementById('rivayetSearch').value.toLocaleLowerCase('tr-TR').trim();
-      const belge = document.getElementById('rivayetBelgeFilter').value;
-      const kail = document.getElementById('rivayetKailFilter').value;
-      const kontrol = document.getElementById('rivayetKontrolFilter').value;
-
-      const filtered = DB.rivayetler.filter(r => {
-        if (belge && r['Belge kodu'] !== belge) return false;
-        if (kail && r['Kâil'] !== kail) return false;
-        if (kontrol && r['Kontrol düzeyi'] !== kontrol) return false;
-        if (!q) return true;
-        return [r['Rivayet kodu'], r['Konu'], r['İsnad (transkripsiyon)'], r["Tarafü'l-hadîs (Arapça)"], r['Not']]
-          .join(' ').toLocaleLowerCase('tr-TR').includes(q);
-      });
-
-      const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE));
-      if (currentRivayetPage > totalPages) currentRivayetPage = totalPages;
-      const start = (currentRivayetPage - 1) * ITEMS_PER_PAGE;
-      const pageItems = filtered.slice(start, start + ITEMS_PER_PAGE);
-
-      const tbody = document.getElementById('rivayetTableBody');
-      tbody.innerHTML = pageItems.map(r => `
-        <tr class="hover:bg-amber-50/50 transition">
-          <td class="p-3 font-semibold text-amber-950 whitespace-nowrap">${r['Rivayet kodu']}</td>
-          <td class="p-3 whitespace-nowrap">
-            <div class="font-medium text-gray-800">${r['Belge kodu']}</div>
-            <div class="text-xs text-gray-500">${r['Yüz/satır']}</div>
-          </td>
-          <td class="p-3">
-            <div class="font-medium text-gray-800">${r['Konu'] || '—'}</div>
-            <div class="text-xs text-gray-500">${r['Tür (M/Mv/Mk)']} • Kâil: ${r['Kâil'] || '-'}</div>
-          </td>
-          <td class="p-3 text-xs text-gray-700 max-w-xs">${r['İsnad (transkripsiyon)'] || '—'}</td>
-          <td class="p-3 arabic-text text-base text-gray-900 max-w-md">${r["Tarafü'l-hadîs (Arapça)"] || '—'}</td>
-          <td class="p-3 whitespace-nowrap">
-            <button onclick="openRivayetModal('${r['Rivayet kodu']}')" class="px-3 py-1.5 bg-amber-100 hover:bg-amber-200 text-amber-950 font-medium rounded text-xs transition">
-              Detay
-            </button>
-          </td>
-        </tr>
-      `).join('');
-
-      document.getElementById('rivayetPagination').innerHTML = `
-        <div>Toplam <strong>${filtered.length}</strong> rivayetten <strong>${filtered.length ? start + 1 : 0}-${Math.min(start + ITEMS_PER_PAGE, filtered.length)}</strong> arası gösteriliyor</div>
-        <div class="flex gap-2">
-          <button ${currentRivayetPage <= 1 ? 'disabled' : ''} onclick="changeRivayetPage(-1)" class="px-3 py-1 bg-white border border-gray-300 rounded disabled:opacity-40 hover:bg-gray-50">← Önceki</button>
-          <span class="px-2 py-1">Sayfa ${currentRivayetPage} / ${totalPages}</span>
-          <button ${currentRivayetPage >= totalPages ? 'disabled' : ''} onclick="changeRivayetPage(1)" class="px-3 py-1 bg-white border border-gray-300 rounded disabled:opacity-40 hover:bg-gray-50">Sonraki →</button>
-        </div>
-      `;
-    }
-
-    function changeRivayetPage(delta) {
-      currentRivayetPage += delta;
-      renderRivayetler();
-    }
-
-    // 3. PAPİRÜS BELGELERİ KARTLARI
-    document.getElementById('belgeSearch').addEventListener('input', renderBelgeler);
+    // 2. PAPİRÜS BELGELERİ
+    document.getElementById('belgeSearchBtn').addEventListener('click', renderBelgeler);
     document.getElementById('belgeSehirFilter').addEventListener('change', renderBelgeler);
 
-    function renderBelgeler() {
-      const q = document.getElementById('belgeSearch').value.toLocaleLowerCase('tr-TR').trim();
+    async function renderBelgeler() {
+      const q = document.getElementById('belgeSearch').value.trim();
       const sehir = document.getElementById('belgeSehirFilter').value;
+      const grid = document.getElementById('belgelerGrid');
+      grid.innerHTML = `<p class="text-sm text-gray-500">Belgeler yükleniyor...</p>`;
 
-      const filtered = DB.belgeler.filter(b => {
-        if (sehir && b['Şehir'] !== sehir) return false;
-        if (!q) return true;
-        return Object.values(b).join(' ').toLocaleLowerCase('tr-TR').includes(q);
-      });
-
-      document.getElementById('belgelerGrid').innerHTML = filtered.map(b => {
-        const imgUrl = String(b['Dijital görüntü'] || '').startsWith('http') ? b['Dijital görüntü'] : '';
-        return `
-          <div class="bg-white p-5 rounded-xl border border-amber-200/90 shadow-sm flex flex-col justify-between">
-            <div>
-              <div class="flex items-start justify-between gap-2">
-                <div>
-                  <span class="text-xs font-bold uppercase tracking-wider text-amber-800 bg-amber-100 px-2 py-0.5 rounded">${b['Belge kodu']}</span>
-                  ${b['Kitapta incelendi (†)'] ? `<span class="ml-1 text-xs font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded" title="Kitapta incelendi">† İncelendi</span>` : ''}
-                  <h3 class="text-base font-bold text-gray-900 mt-1.5">${b['Koleksiyon'] || b['Belge kodu']}</h3>
-                  <p class="text-xs text-gray-500">${b['Şehir']} • Envanter: ${b['Envanter'] || '-'}</p>
+      try {
+        const data = await callAPI({ action: 'belgeler', q, sehir });
+        const items = data.items || [];
+        if (items.length === 0) {
+          grid.innerHTML = `<p class="text-sm text-gray-500">Eşleşen belge bulunamadı.</p>`;
+          return;
+        }
+        grid.innerHTML = items.map(b => {
+          const imgUrl = String(b['Dijital görüntü'] || '').startsWith('http') ? b['Dijital görüntü'] : '';
+          return `
+            <div class="bg-white p-5 rounded-xl border border-amber-200/90 shadow-sm flex flex-col justify-between">
+              <div>
+                <div class="flex items-start justify-between gap-2">
+                  <div>
+                    <span class="text-xs font-bold uppercase tracking-wider text-amber-800 bg-amber-100 px-2 py-0.5 rounded">${escapeHtml(b['Belge kodu'])}</span>
+                    ${b['Kitapta incelendi (†)'] ? `<span class="ml-1 text-xs font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded">† İncelendi</span>` : ''}
+                    <h3 class="text-base font-bold text-gray-900 mt-1.5">${escapeHtml(b['Koleksiyon'] || b['Belge kodu'])}</h3>
+                    <p class="text-xs text-gray-500">${escapeHtml(b['Şehir'])} • Envanter: ${escapeHtml(b['Envanter'] || '-')}</p>
+                  </div>
+                  <span class="text-xs font-semibold bg-stone-100 text-stone-800 px-2.5 py-1 rounded-lg border border-stone-200 whitespace-nowrap">
+                    ${escapeHtml(b['Tarih'] || 'Tarihsiz')}
+                  </span>
                 </div>
-                <span class="text-xs font-semibold bg-stone-100 text-stone-800 px-2.5 py-1 rounded-lg border border-stone-200 whitespace-nowrap">
-                  ${b['Tarih'] || 'Tarihsiz'}
-                </span>
+
+                <div class="mt-3 text-xs text-gray-700 space-y-1.5 bg-stone-50 p-3 rounded-lg">
+                  <div><strong>Muhteva:</strong> ${escapeHtml(b['Muhteva'] || '—')}</div>
+                  <div><strong>Malzeme / Biçim:</strong> ${escapeHtml(b['Malzeme'] || '-')} / ${escapeHtml(b['Biçim'] || '-')}</div>
+                  <div><strong>Neşir:</strong> ${escapeHtml(b['Neşir'] || '—')}</div>
+                  <div><strong>Rivayet Sayısı:</strong> Ek 1: ${escapeHtml(b['Rivayet sayısı (Ek 1)'] || '-')} | Veritabanı: ${escapeHtml(b['Veritabanındaki rivayet satırı'] || '0')}</div>
+                  ${b['Not'] ? `<div class="text-gray-600 pt-1 border-t border-stone-200"><strong>Not:</strong> ${escapeHtml(b['Not'])}</div>` : ''}
+                </div>
               </div>
 
-              <div class="mt-3 text-xs text-gray-700 space-y-1.5 bg-stone-50 p-3 rounded-lg">
-                <div><strong>Muhteva:</strong> ${b['Muhteva'] || '—'}</div>
-                <div><strong>Malzeme / Biçim:</strong> ${b['Malzeme'] || '-'} / ${b['Biçim'] || '-'}</div>
-                <div><strong>Neşir:</strong> ${b['Neşir'] || '—'}</div>
-                <div><strong>Rivayet Sayısı:</strong> Ek 1: ${b['Rivayet sayısı (Ek 1)'] || '-'} | Veritabanı: ${b['Veritabanındaki rivayet satırı'] || '0'}</div>
-                ${b['Not'] ? `<div class="text-gray-600 pt-1 border-t border-stone-200"><strong>Not:</strong> ${b['Not']}</div>` : ''}
+              <div class="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
+                <button onclick="filterByBelge('${escapeHtml(b['Belge kodu'])}')" class="text-xs font-semibold text-amber-800 hover:text-amber-950">
+                  Bu Belgedeki Rivayetleri Sorgula →
+                </button>
+                ${imgUrl ? `<a href="${escapeHtml(imgUrl)}" target="_blank" rel="noopener" class="text-xs font-medium bg-blue-50 hover:bg-blue-100 text-blue-700 px-2.5 py-1 rounded">Dijital Görüntü ↗</a>` : ''}
               </div>
             </div>
-
-            <div class="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
-              <button onclick="filterByBelge('${b['Belge kodu']}')" class="text-xs font-semibold text-amber-800 hover:text-amber-950">
-                Bu Belgedeki Rivayetleri Gör →
-              </button>
-              ${imgUrl ? `<a href="${imgUrl}" target="_blank" rel="noopener" class="text-xs font-medium bg-blue-50 hover:bg-blue-100 text-blue-700 px-2.5 py-1 rounded">Dijital Görüntü ↗</a>` : ''}
-            </div>
-          </div>
-        `;
-      }).join('');
+          `;
+        }).join('');
+      } catch (err) {
+        grid.innerHTML = `<p class="text-sm text-red-600">${escapeHtml(err.message)}</p>`;
+      }
     }
 
     function filterByBelge(belgeKodu) {
-      document.querySelector('[data-tab="rivayetler"]').click();
-      document.getElementById('rivayetBelgeFilter').value = belgeKodu;
-      currentRivayetPage = 1;
-      renderRivayetler();
+      document.querySelector('[data-tab="hadisBul"]').click();
+      document.getElementById('hadisBulBelgeFilter').value = belgeKodu;
+      runHadisBul();
     }
 
-    // 4. PARALELLER TABLOSU
-    ['paralelSearch', 'paralelEserTurFilter', 'paralelLafizFilter'].forEach(id => {
-      document.getElementById(id).addEventListener('input', renderParaleller);
-    });
+    // 3. RÂVİLER
+    document.getElementById('raviSearchBtn').addEventListener('click', renderRaviler);
 
-    function renderParaleller() {
-      const q = document.getElementById('paralelSearch').value.toLocaleLowerCase('tr-TR').trim();
-      const tur = document.getElementById('paralelEserTurFilter').value;
-      const lafiz = document.getElementById('paralelLafizFilter').value;
+    async function renderRaviler() {
+      const q = document.getElementById('raviSearch').value.trim();
+      const grid = document.getElementById('ravilerGrid');
+      grid.innerHTML = `<p class="text-sm text-gray-500">Râviler yükleniyor...</p>`;
 
-      const filtered = DB.paraleller.filter(p => {
-        if (tur && p['Eser türü'] !== tur) return false;
-        if (lafiz && p['Lafız ilişkisi'] !== lafiz) return false;
-        if (!q) return true;
-        return Object.values(p).join(' ').toLocaleLowerCase('tr-TR').includes(q);
-      });
-
-      document.getElementById('paralelTableBody').innerHTML = filtered.slice(0, 100).map(p => `
-        <tr class="hover:bg-amber-50/50">
-          <td class="p-3 font-semibold text-amber-950 whitespace-nowrap">
-            <button onclick="openRivayetModal('${p['Rivayet kodu']}')" class="underline hover:text-amber-700">${p['Rivayet kodu']}</button>
-          </td>
-          <td class="p-3">
-            <div class="font-medium text-gray-900">${p['Eser']}</div>
-            <div class="text-xs text-gray-500">${p['Eser türü']}</div>
-          </td>
-          <td class="p-3 text-xs text-gray-700 whitespace-nowrap">
-            Cilt/S.: ${p['Cilt/sayfa'] || '-'}<br/>No: <strong>${p['Numara'] || '-'}</strong>
-          </td>
-          <td class="p-3 text-xs text-gray-700 max-w-xs">${p['Kesişme noktası (ortak râvi / tarik)'] || '—'}</td>
-          <td class="p-3 text-xs">
-            <span class="px-2 py-0.5 rounded bg-amber-50 text-amber-900 border border-amber-200">${p['Lafız ilişkisi'] || '—'}</span>
-          </td>
-          <td class="p-3 text-xs text-gray-600 max-w-xs">${p['Not'] || '—'}</td>
-        </tr>
-      `).join('');
-    }
-
-    // 5. RÂVİLER KARTLARI
-    document.getElementById('raviSearch').addEventListener('input', renderRaviler);
-
-    function renderRaviler() {
-      const q = document.getElementById('raviSearch').value.toLocaleLowerCase('tr-TR').trim();
-      const filtered = DB.raviler.filter(r => {
-        if (!q) return true;
-        return Object.values(r).join(' ').toLocaleLowerCase('tr-TR').includes(q);
-      });
-
-      document.getElementById('ravilerGrid').innerHTML = filtered.map(r => `
-        <div class="bg-white p-5 rounded-xl border border-amber-200/90 shadow-sm space-y-2.5">
-          <div class="flex items-start justify-between gap-2">
-            <div>
-              <h3 class="font-bold text-gray-900 text-base">${r['Standart yazım']}</h3>
-              ${r['Varyant yazımlar'] ? `<div class="text-xs text-gray-500">Varyantlar: ${r['Varyant yazımlar']}</div>` : ''}
+      try {
+        const data = await callAPI({ action: 'raviler', q });
+        const items = data.items || [];
+        if (items.length === 0) {
+          grid.innerHTML = `<p class="text-sm text-gray-500">Eşleşen râvi bulunamadı.</p>`;
+          return;
+        }
+        grid.innerHTML = items.map(r => `
+          <div class="bg-white p-5 rounded-xl border border-amber-200/90 shadow-sm space-y-2.5">
+            <div class="flex items-start justify-between gap-2">
+              <div>
+                <h3 class="font-bold text-gray-900 text-base">${escapeHtml(r['Standart yazım'])}</h3>
+                ${r['Varyant yazımlar'] ? `<div class="text-xs text-gray-500">Varyantlar: ${escapeHtml(r['Varyant yazımlar'])}</div>` : ''}
+              </div>
+              <span class="text-xs font-semibold bg-amber-100 text-amber-950 px-2 py-1 rounded whitespace-nowrap">
+                v. ${escapeHtml(r['Vefat (h./m.)'] || '?')}
+              </span>
             </div>
-            <span class="text-xs font-semibold bg-amber-100 text-amber-950 px-2 py-1 rounded whitespace-nowrap">
-              v. ${r['Vefat (h./m.)'] || '?'}
-            </span>
+            <div class="text-xs text-gray-700 space-y-1 bg-stone-50 p-3 rounded-lg">
+              <div><strong>Bölge:</strong> ${escapeHtml(r['Bölge'] || '—')}</div>
+              <div><strong>Takrîb (İbn Hacer):</strong> ${escapeHtml(r['Takrîb (İbn Hacer)'] || '—')}</div>
+              <div><strong>Geçtiği Belgeler:</strong> <span class="text-amber-900 font-medium">${escapeHtml(r['Papirüs isnadlarında geçtiği belgeler (rivayet; otomatik, aday eşleşme)'] || '—')}</span></div>
+            </div>
+            ${r['Kaynak / not'] ? `<div class="text-xs text-gray-500">${escapeHtml(r['Kaynak / not'])}</div>` : ''}
           </div>
-          <div class="text-xs text-gray-700 space-y-1 bg-stone-50 p-3 rounded-lg">
-            <div><strong>Bölge:</strong> ${r['Bölge'] || '—'}</div>
-            <div><strong>Takrîb (İbn Hacer):</strong> ${r['Takrîb (İbn Hacer)'] || '—'}</div>
-            <div><strong>Geçtiği Belgeler:</strong> <span class="text-amber-900 font-medium">${r['Papirüs isnadlarında geçtiği belgeler (rivayet; otomatik, aday eşleşme)'] || '—'}</span></div>
-          </div>
-          ${r['Kaynak / not'] ? `<div class="text-xs text-gray-500">${r['Kaynak / not']}</div>` : ''}
-        </div>
-      `).join('');
+        `).join('');
+      } catch (err) {
+        grid.innerHTML = `<p class="text-sm text-red-600">${escapeHtml(err.message)}</p>`;
+      }
     }
 
-    // 6. KILAVUZ & KISALTMALAR
-    function renderKilavuz() {
-      document.getElementById('kilavuzTableBody').innerHTML = DB.kaynaklar.map(k => `
-        <tr class="hover:bg-amber-50/40">
-          <td class="p-3"><span class="px-2 py-0.5 text-xs font-medium bg-stone-100 text-stone-700 rounded">${k['Tür']}</span></td>
-          <td class="p-3 font-bold text-amber-950">${k['Kod / kısaltma']}</td>
-          <td class="p-3 text-gray-700 leading-relaxed">${k['Açıklama / künye']}</td>
-        </tr>
-      `).join('');
+    // 4. KILAVUZ & KISALTMALAR
+    async function renderKilavuz() {
+      const tbody = document.getElementById('kilavuzTableBody');
+      tbody.innerHTML = `<tr><td colspan="3" class="p-4 text-gray-500">Yükleniyor...</td></tr>`;
+      try {
+        const data = await callAPI({ action: 'kaynaklar' });
+        const items = data.items || [];
+        tbody.innerHTML = items.map(k => `
+          <tr class="hover:bg-amber-50/40">
+            <td class="p-3"><span class="px-2 py-0.5 text-xs font-medium bg-stone-100 text-stone-700 rounded">${escapeHtml(k['Tür'])}</span></td>
+            <td class="p-3 font-bold text-amber-950">${escapeHtml(k['Kod / kısaltma'])}</td>
+            <td class="p-3 text-gray-700 leading-relaxed">${escapeHtml(k['Açıklama / künye'])}</td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="3" class="p-4 text-red-600">${escapeHtml(err.message)}</td></tr>`;
+      }
     }
 
     // DETAY MODALI
@@ -798,86 +588,93 @@
     document.getElementById('closeModalBtn').addEventListener('click', () => modal.classList.add('hidden'));
     modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.add('hidden'); });
 
-    function openRivayetModal(rivayetKodu) {
-      const r = DB.rivayetler.find(item => item['Rivayet kodu'] === rivayetKodu);
-      if (!r) return;
-
-      const belge = DB.belgeMap[r['Belge kodu']] || {};
-      const paraleller = DB.paralelMap[rivayetKodu] || [];
-
-      document.getElementById('modalBelgeBadge').textContent = `${r['Belge kodu']} • ${r['Yüz/satır'] || ''}`;
-      document.getElementById('modalTitle').textContent = `${r['Rivayet kodu']} — ${r['Konu'] || 'Rivayet İncelemesi'}`;
-
-      document.getElementById('modalBody').innerHTML = `
-        <!-- Metin ve İsnad -->
-        <div class="space-y-3">
-          <div class="bg-stone-50 p-4 rounded-xl border border-stone-200">
-            <div class="text-xs font-bold text-stone-500 uppercase mb-1">İsnad (Papirüsteki Okuma)</div>
-            <div class="arabic-text text-stone-800">${r['İsnad (Arapça, papirüsteki okuma)'] || '—'}</div>
-            <div class="text-xs text-stone-600 mt-2 pt-2 border-t border-stone-200">
-              <strong>Transkripsiyon:</strong> ${r['İsnad (transkripsiyon)'] || '—'}
-            </div>
-          </div>
-
-          <div class="bg-amber-50 p-4 rounded-xl border border-amber-200">
-            <div class="flex justify-between text-xs font-bold text-amber-900 uppercase mb-1">
-              <span>Tarafü'l-Hadîs (Arapça)</span>
-              <span>Başın Kaynağı: ${r['Başın kaynağı'] || '-'}</span>
-            </div>
-            <div class="arabic-text text-gray-950 font-bold">${r["Tarafü'l-hadîs (Arapça)"] || '—'}</div>
-          </div>
-        </div>
-
-        <!-- Künye ve Filolojik Bilgiler -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-          <div class="bg-white p-4 rounded-xl border border-gray-200 space-y-1.5">
-            <h4 class="font-bold text-gray-800 text-sm mb-2">Filolojik ve Neşir Bilgileri</h4>
-            <div><strong>Neşirdeki No:</strong> ${r['Neşirdeki no.'] || '—'}</div>
-            <div><strong>Kâil / Sahâbî:</strong> ${r['Kâil'] || '—'}</div>
-            <div><strong>Rivayet Türü:</strong> ${r['Tür (M/Mv/Mk)'] || '—'}</div>
-            <div><strong>Esas Okuma:</strong> ${r['Okuma'] || '—'}</div>
-            <div><strong>Tamamlama Usulü:</strong> ${r['Tamamlama'] || '—'}</div>
-            <div><strong>Kontrol Durumu:</strong> ${r['Kontrol durumu'] || '—'} (${r['Kontrol düzeyi'] || '-'})</div>
-          </div>
-
-          <div class="bg-white p-4 rounded-xl border border-gray-200 space-y-1.5">
-            <h4 class="font-bold text-gray-800 text-sm mb-2">Belge Bilgisi (${r['Belge kodu']})</h4>
-            <div><strong>Koleksiyon:</strong> ${belge['Koleksiyon'] || '—'} (${belge['Şehir'] || '-'})</div>
-            <div><strong>Tarihlendirme:</strong> ${belge['Tarih'] || '—'}</div>
-            <div><strong>Tarihin Kaynağı:</strong> ${belge['Tarihin kaynağı'] || '—'}</div>
-            <div><strong>Malzeme / Biçim:</strong> ${belge['Malzeme'] || '-'} / ${belge['Biçim'] || '-'}</div>
-            <div><strong>Muhteva:</strong> ${belge['Muhteva'] || '—'}</div>
-          </div>
-        </div>
-
-        ${r['Not'] ? `
-          <div class="bg-blue-50/70 p-4 rounded-xl border border-blue-200 text-xs text-blue-950">
-            <strong>Araştırma Notu:</strong> ${r['Not']}
-          </div>` : ''}
-
-        <!-- Matbu Paraleller -->
-        <div>
-          <h4 class="font-bold text-gray-800 text-base mb-3">Matbu Kaynaklardaki Paralelleri (${paraleller.length})</h4>
-          ${paraleller.length === 0 ? '<p class="text-xs text-gray-500">Bu rivayet için kayıtlı matbu paralel bulunmuyor.</p>' : `
-            <div class="space-y-2.5">
-              ${paraleller.map(p => `
-                <div class="p-3.5 rounded-xl border border-gray-200 bg-gray-50 text-xs space-y-1">
-                  <div class="flex flex-wrap justify-between gap-2">
-                    <span class="font-bold text-amber-950 text-sm">${p['Eser']}</span>
-                    <span class="bg-white px-2 py-0.5 rounded border border-gray-300 font-medium">Cilt/S.: ${p['Cilt/sayfa'] || '-'} | No: ${p['Numara'] || '-'}</span>
-                  </div>
-                  <div><strong>Ortak Râvi / Tarik:</strong> ${p['Kesişme noktası (ortak râvi / tarik)'] || '—'}</div>
-                  <div><strong>Lafız İlişkisi:</strong> <span class="text-emerald-800 font-medium">${p['Lafız ilişkisi'] || '—'}</span></div>
-                  ${p['Not'] ? `<div class="text-gray-600 pt-1"><strong>Not:</strong> ${p['Not']}</div>` : ''}
-                </div>
-              `).join('')}
-            </div>
-          `}
-        </div>
-      `;
-
+    async function openRivayetModal(rivayetKodu) {
       modal.classList.remove('hidden');
+      document.getElementById('modalBelgeBadge').textContent = rivayetKodu;
+      document.getElementById('modalTitle').textContent = 'Yükleniyor...';
+      document.getElementById('modalBody').innerHTML = `<p class="text-sm text-gray-500">Rivayet ve paralel verileri getiriliyor...</p>`;
+
+      try {
+        const data = await callAPI({ action: 'detail', code: rivayetKodu });
+        const r = data.rivayet || {};
+        const belge = data.belge || {};
+        const paraleller = data.paraleller || [];
+
+        document.getElementById('modalBelgeBadge').textContent = `${r['Belge kodu'] || ''} • ${r['Yüz/satır'] || ''}`;
+        document.getElementById('modalTitle').textContent = `${r['Rivayet kodu'] || rivayetKodu} — ${r['Konu'] || 'Rivayet İncelemesi'}`;
+
+        document.getElementById('modalBody').innerHTML = `
+          <div class="space-y-3">
+            <div class="bg-stone-50 p-4 rounded-xl border border-stone-200">
+              <div class="text-xs font-bold text-stone-500 uppercase mb-1">İsnad (Papirüsteki Okuma)</div>
+              <div class="arabic-text text-stone-800">${escapeHtml(r['İsnad (Arapça, papirüsteki okuma)'] || '—')}</div>
+              <div class="text-xs text-stone-600 mt-2 pt-2 border-t border-stone-200">
+                <strong>Transkripsiyon:</strong> ${escapeHtml(r['İsnad (transkripsiyon)'] || '—')}
+              </div>
+            </div>
+
+            <div class="bg-amber-50 p-4 rounded-xl border border-amber-200">
+              <div class="flex justify-between text-xs font-bold text-amber-900 uppercase mb-1">
+                <span>Tarafü'l-Hadîs (Arapça)</span>
+                <span>Başın Kaynağı: ${escapeHtml(r['Başın kaynağı'] || '-')}</span>
+              </div>
+              <div class="arabic-text text-gray-950 font-bold">${escapeHtml(r["Tarafü'l-hadîs (Arapça)"] || '—')}</div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+            <div class="bg-white p-4 rounded-xl border border-gray-200 space-y-1.5">
+              <h4 class="font-bold text-gray-800 text-sm mb-2">Filolojik ve Neşir Bilgileri</h4>
+              <div><strong>Neşirdeki No:</strong> ${escapeHtml(r['Neşirdeki no.'] || '—')}</div>
+              <div><strong>Kâil / Sahâbî:</strong> ${escapeHtml(r['Kâil'] || '—')}</div>
+              <div><strong>Rivayet Türü:</strong> ${escapeHtml(r['Tür (M/Mv/Mk)'] || '—')}</div>
+              <div><strong>Esas Okuma:</strong> ${escapeHtml(r['Okuma'] || '—')}</div>
+              <div><strong>Tamamlama Usulü:</strong> ${escapeHtml(r['Tamamlama'] || '—')}</div>
+              <div><strong>Kontrol Durumu:</strong> ${escapeHtml(r['Kontrol durumu'] || '—')} (${escapeHtml(r['Kontrol düzeyi'] || '-')})</div>
+            </div>
+
+            <div class="bg-white p-4 rounded-xl border border-gray-200 space-y-1.5">
+              <h4 class="font-bold text-gray-800 text-sm mb-2">Belge Bilgisi (${escapeHtml(r['Belge kodu'] || '')})</h4>
+              <div><strong>Koleksiyon:</strong> ${escapeHtml(belge['Koleksiyon'] || '—')} (${escapeHtml(belge['Şehir'] || '-')})</div>
+              <div><strong>Tarihlendirme:</strong> ${escapeHtml(belge['Tarih'] || '—')}</div>
+              <div><strong>Tarihin Kaynağı:</strong> ${escapeHtml(belge['Tarihin kaynağı'] || '—')}</div>
+              <div><strong>Malzeme / Biçim:</strong> ${escapeHtml(belge['Malzeme'] || '-')} / ${escapeHtml(belge['Biçim'] || '-')}</div>
+              <div><strong>Muhteva:</strong> ${escapeHtml(belge['Muhteva'] || '—')}</div>
+            </div>
+          </div>
+
+          ${r['Not'] ? `
+            <div class="bg-blue-50/70 p-4 rounded-xl border border-blue-200 text-xs text-blue-950">
+              <strong>Araştırma Notu:</strong> ${escapeHtml(r['Not'])}
+            </div>` : ''}
+
+          <div>
+            <h4 class="font-bold text-gray-800 text-base mb-3">Matbu Kaynaklardaki Paralelleri (${paraleller.length})</h4>
+            ${paraleller.length === 0 ? '<p class="text-xs text-gray-500">Bu rivayet için kayıtlı matbu paralel bulunmuyor.</p>' : `
+              <div class="space-y-2.5">
+                ${paraleller.map(p => `
+                  <div class="p-3.5 rounded-xl border border-gray-200 bg-gray-50 text-xs space-y-1">
+                    <div class="flex flex-wrap justify-between gap-2">
+                      <span class="font-bold text-amber-950 text-sm">${escapeHtml(p['Eser'] || '')}</span>
+                      <span class="bg-white px-2 py-0.5 rounded border border-gray-300 font-medium">Cilt/S.: ${escapeHtml(p['Cilt/sayfa'] || '-')} | No: <strong>${escapeHtml(p['Numara'] || '-')}</strong></span>
+                    </div>
+                    <div><strong>Ortak Râvi / Tarik:</strong> ${escapeHtml(p['Kesişme noktası (ortak râvi / tarik)'] || '—')}</div>
+                    <div><strong>Lafız İlişkisi:</strong> <span class="text-emerald-800 font-medium">${escapeHtml(p['Lafız ilişkisi'] || '—')}</span></div>
+                    ${p['Not'] ? `<div class="text-gray-600 pt-1"><strong>Not:</strong> ${escapeHtml(p['Not'])}</div>` : ''}
+                  </div>
+                `).join('')}
+              </div>
+            `}
+          </div>
+        `;
+      } catch (err) {
+        document.getElementById('modalBody').innerHTML = `<p class="text-sm text-red-600">${escapeHtml(err.message)}</p>`;
+      }
     }
+
+    // Başlangıç yüklemesi
+    loadStatsAndFilters();
+    runHadisBul();
   </script>
 </body>
 </html>
