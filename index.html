@@ -434,21 +434,9 @@
         </div>`;
     }
 
-    // Sayfayı getirir. Sunucu "offset" parametresini desteklemiyorsa
-    // (aynı ilk kayıt tekrar dönerse) limit'i büyütüp istemci tarafında dilimler.
+    // Sunucu (Code.gs) "offset" parametresiyle sayfalama yapar: offset = (sayfa-1) * limit
     async function fetchPage(base, page) {
-      const offset = (page - 1) * PAGE_SIZE;
-      const data = await callAPI({ ...base, limit: PAGE_SIZE, offset, page });
-      if (page === 1) return data;
-
-      const first = await callAPI({ ...base, limit: 1, offset: 0 }).catch(() => null);
-      const firstCode = first && first.items && first.items[0] && first.items[0].rivayetKodu;
-      const gotCode = data.items && data.items[0] && data.items[0].rivayetKodu;
-      if (firstCode && gotCode && firstCode === gotCode) {
-        const full = await callAPI({ ...base, limit: page * PAGE_SIZE });
-        return { ...full, items: (full.items || []).slice(offset, offset + PAGE_SIZE) };
-      }
-      return data;
+      return callAPI({ ...base, limit: PAGE_SIZE, offset: (page - 1) * PAGE_SIZE });
     }
 
     async function runHadisBul(page = 1) {
