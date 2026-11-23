@@ -215,7 +215,7 @@
         <div class="bg-amber-50 border border-amber-200 p-4 rounded-xl">
           <div class="font-semibold text-amber-950 mb-1">Önerilen Akademik Atıf</div>
           <p class="font-mono text-xs text-gray-800">
-            [Yazar/Araştırmacı Adı], <em>Hadis Papirüsleri Veritabanı</em> (Web Sorgu Arayüzü, erişim tarihi: <span id="accessDate"></span>).
+            Hüseyin Akgün, <em>Hadis Papirüsleri Veritabanı</em> (Web Sorgu Arayüzü, erişim tarihi: <span id="accessDate"></span>).
           </p>
         </div>
         <ul class="list-disc pl-5 space-y-1.5">
@@ -274,7 +274,9 @@
         .replace(/[\u064B-\u065F\u0670]/g, '')
         .replace(/\u0640/g, '')
         .replace(/[\[\]\(\)\{\}«»"“”'،؛؟\.,!:\-—–…∗†‡]/g, ' ')
-        .replace(/[أإآاٱءؤئ]/g, '')
+        .replace(/[أإآاٱء]/g, '')
+        .replace(/ؤ/g, 'و')   // veritabanındaki "Arama metni" kuralıyla aynı
+        .replace(/ئ/g, 'ي')
         .replace(/ى/g, 'ي')
         .replace(/ة/g, 'ه')
         .replace(/\s+/g, ' ')
@@ -409,7 +411,10 @@
       try {
         const data = await callAPI({ action: 'search', q, belge, tur, limit: 25 });
         const matches = data.items || [];
-        countEl.textContent = `Bulunan Eşleşme: ${data.totalMatches ?? matches.length} rivayet (${matches.length} kayıt gösteriliyor)`;
+        const ayrim = (data.wordMatches > 0)
+          ? ` — ${data.exactMatches} ibare eşleşmesi, ${data.wordMatches} kelime eşleşmesi`
+          : '';
+        countEl.textContent = `Bulunan Eşleşme: ${data.totalMatches ?? matches.length} rivayet${ayrim} (${matches.length} kayıt gösteriliyor)`;
 
         if (matches.length === 0) {
           container.innerHTML = `
@@ -427,6 +432,7 @@
                 <span class="text-xs font-medium bg-stone-100 text-stone-700 px-2 py-1 rounded">${escapeHtml(r.belgeKodu)} (${escapeHtml(r.yuzSatir || '-')})</span>
                 ${r.tarih ? `<span class="text-xs font-medium bg-blue-50 text-blue-800 px-2 py-1 rounded">📅 ${escapeHtml(r.tarih)}</span>` : ''}
                 ${r.tur ? `<span class="text-xs font-medium bg-purple-50 text-purple-800 px-2 py-1 rounded">${escapeHtml(r.tur)}</span>` : ''}
+                ${r.eslesme === 'kelime' ? `<span class="text-xs font-medium bg-orange-50 text-orange-800 border border-orange-200 px-2 py-1 rounded" title="Aranan kelimelerin hepsi aynı metinde geçiyor, ancak ibare bitişik değil (araya başka kelimeler giriyor).">kelime eşleşmesi</span>` : ''}
                 ${r.konu ? `<span class="text-xs font-semibold text-amber-800">• ${escapeHtml(r.konu)}</span>` : ''}
               </div>
               <button onclick="openRivayetModal('${escapeHtml(r.rivayetKodu)}')" class="text-xs font-semibold bg-amber-800 hover:bg-amber-700 text-white px-3 py-1.5 rounded-lg transition">
