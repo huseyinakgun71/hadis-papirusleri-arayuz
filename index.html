@@ -3,69 +3,112 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#29251f" />
+  <meta name="description" content="Erken dönem hadis papirüsleri, isnad ağları ve matbu kaynaklardaki paraleller için akademik araştırma veritabanı." />
   <title>Hadis Papirüsleri Veritabanı</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    body { font-family: 'Inter', sans-serif; background-color: #f8f6f0; color: #1f2937; }
-    .arabic-text { font-family: 'Amiri', serif; direction: rtl; unicode-bidi: isolate; font-size: 1.35rem; line-height: 2.1rem; }
-    .papyrus-header { background: linear-gradient(135deg, #2c241b 0%, #4a3b2c 100%); }
-    .tab-active { border-bottom: 3px solid #92400e; color: #78350f; font-weight: 600; background-color: #fef3c7; }
-    ::-webkit-scrollbar { width: 8px; height: 8px; }
-    ::-webkit-scrollbar-track { background: #f1ede4; }
-    ::-webkit-scrollbar-thumb { background: #c4b59b; border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: #a39171; }
-    .skeleton { background: linear-gradient(90deg,#f1ede4 25%,#e8e1d1 50%,#f1ede4 75%); background-size: 200% 100%; animation: shimmer 1.2s infinite; }
-    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-    .page-btn { min-width: 2.25rem; }
+    :root { color-scheme: light; --ink:#29251f; --bronze:#9b6b36; --paper:#f5f2eb; }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { font-family:'Inter',sans-serif; background:radial-gradient(ellipse at 12% 0%,#fffdf8 0%,transparent 42%),var(--paper); color:#29251f; }
+    .arabic-text { font-family:'Amiri',serif; direction:rtl; unicode-bidi:isolate; font-size:1.45rem; line-height:2.35rem; overflow-wrap:anywhere; }
+    .papyrus-header { background:linear-gradient(115deg,rgba(34,29,23,.98),rgba(75,57,37,.97)), repeating-linear-gradient(0deg,transparent 0 5px,rgba(255,255,255,.025) 5px 6px); position:relative; overflow:hidden; }
+    .papyrus-header:after { content:'۞'; position:absolute; right:5%; top:-3.5rem; font-family:serif; font-size:17rem; line-height:1; color:rgba(231,194,133,.07); pointer-events:none; }
+    .header-inner { position:relative; z-index:1; }
+    .author-chip { display:inline-flex; align-items:center; gap:.65rem; border:1px solid rgba(231,194,133,.35); background:rgba(255,255,255,.07); border-radius:999px; padding:.55rem .9rem; color:#f8e9ce; }
+    .author-seal { display:grid; place-items:center; width:2rem; height:2rem; border-radius:50%; background:#d6b47d; color:#30271d; font-weight:800; font-family:Georgia,serif; }
+    .tab-active { border-bottom:3px solid #a9783f; color:#6d4824; font-weight:700; background:#fbf5e9; }
+    .tab-btn:focus-visible,button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible { outline:3px solid #c69a5d; outline-offset:2px; }
+    .tab-btn { border-bottom:3px solid transparent; }
+    .stat-card { position:relative; overflow:hidden; transition:transform .2s ease,box-shadow .2s ease; }
+    .stat-card:hover { transform:translateY(-2px); box-shadow:0 12px 26px rgba(61,45,25,.08); }
+    .stat-card:after { content:''; position:absolute; width:4rem; height:4rem; right:-1.5rem; bottom:-2rem; border:1px solid rgba(166,119,62,.18); border-radius:50%; }
+    .panel-card { box-shadow:0 8px 24px rgba(55,42,25,.045); }
+    .arabic-panel { background:linear-gradient(135deg,#fffaf0,#f8f0df); }
+    ::-webkit-scrollbar { width:8px;height:8px; }
+    ::-webkit-scrollbar-track { background:#eee8dc; }
+    ::-webkit-scrollbar-thumb { background:#c4b59b;border-radius:8px; }
+    ::-webkit-scrollbar-thumb:hover { background:#a39171; }
+    .skeleton { background:linear-gradient(90deg,#f1ede4 25%,#e8e1d1 50%,#f1ede4 75%);background-size:200% 100%;animation:shimmer 1.2s infinite; }
+    @keyframes shimmer { 0%{background-position:200% 0}100%{background-position:-200% 0} }
+    .page-btn { min-width:2.25rem; }
+    .tab-panel { animation:fade-in .22s ease-out; }
+    @keyframes fade-in { from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)} }
+    #detailModal { backdrop-filter:blur(4px); }
+    @media(max-width:640px) { .arabic-text{font-size:1.3rem;line-height:2.1rem}.author-chip{border-radius:14px} }
+    @media(prefers-reduced-motion:reduce) { *,*:before,*:after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important} }
   </style>
 </head>
 <body class="min-h-screen flex flex-col">
 
   <header class="papyrus-header text-amber-50 shadow-md">
-    <div class="max-w-7xl mx-auto px-4 py-5">
-      <h1 class="text-xl md:text-2xl font-bold tracking-tight text-amber-50">Hadis Papirüsleri Veritabanı</h1>
-      <p class="text-xs md:text-sm text-amber-200/80 mt-1">
-        Erken Dönem Papirüs Nüshaları, İsnad Ağları ve Matbu Paralel Sorgulama Sistemi
-      </p>
+    <div class="header-inner max-w-7xl mx-auto px-4 py-7 md:py-9">
+      <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-5">
+        <div class="max-w-3xl">
+          <div class="text-[10px] uppercase tracking-[.28em] text-amber-200/70 mb-2">Dijital araştırma platformu</div>
+          <h1 class="text-2xl md:text-4xl font-bold tracking-tight text-amber-50">Hadis Papirüsleri Veritabanı</h1>
+          <p class="text-sm md:text-base text-amber-100/75 mt-2 leading-relaxed">Erken Dönem Papirüs Nüshaları, İsnad Ağları ve Matbu Paralel Sorgulama Sistemi</p>
+        </div>
+        <div class="flex flex-col items-start md:items-end gap-3">
+        <label class="flex items-center gap-2 text-xs text-amber-100/80" for="languageSelect">
+          <span aria-hidden="true">🌐</span><span data-i18n="Dil">Dil</span>
+          <select id="languageSelect" class="rounded-lg border border-amber-200/40 bg-stone-900/70 text-amber-50 px-2.5 py-2 text-xs focus:ring-2 focus:ring-amber-300" aria-label="Dil seçimi">
+            <option value="tr">Türkçe</option><option value="en">English</option>
+          </select>
+        </label>
+        <div class="author-chip self-start md:self-auto" aria-label="Hazırlayan Prof. Dr. Hüseyin Akgün">
+          <span class="author-seal" aria-hidden="true">HA</span>
+          <span><span class="block text-[9px] uppercase tracking-[.18em] text-amber-200/70">Hazırlayan</span><strong class="text-sm md:text-base">Prof. Dr. Hüseyin Akgün</strong></span>
+        </div>
+        </div>
+      </div>
+      <div class="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-[11px] text-amber-100/60">
+        <span>◈ Erken yazılı tanıklar</span><span>◈ İsnad ve metin karşılaştırması</span><span>◈ Matbu kaynaklarla paralel tarama</span>
+      </div>
     </div>
   </header>
 
-  <main class="flex-1 flex flex-col max-w-7xl w-full mx-auto px-4 py-6 gap-6">
+  <main id="mainContent" class="flex-1 flex flex-col max-w-7xl w-full mx-auto px-4 py-7 gap-6">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-1">
+      <div><p class="text-[10px] uppercase tracking-[.2em] text-stone-500">Araştırma ve keşif alanı</p><h2 class="text-lg font-bold text-stone-800">Veritabanına hoş geldiniz</h2></div>
+      <span class="text-xs text-stone-500">Akademik kullanım için hazırlanmıştır</span>
+    </div>
 
-    <div id="alertBox" class="hidden p-4 rounded-xl border text-sm"></div>
+    <div id="alertBox" class="hidden p-4 rounded-xl border text-sm" role="status" aria-live="polite"></div>
 
     <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
-      <div class="bg-white p-4 rounded-xl border border-amber-200/80 shadow-sm">
+      <div class="stat-card bg-white p-4 rounded-xl border border-amber-200/70 shadow-sm">
         <div class="text-xs text-gray-500 font-medium">Toplam Belge</div>
         <div id="statBelgeler" class="text-2xl font-bold text-amber-900 mt-1">—</div>
       </div>
-      <div class="bg-white p-4 rounded-xl border border-amber-200/80 shadow-sm">
+      <div class="stat-card bg-white p-4 rounded-xl border border-amber-200/70 shadow-sm">
         <div class="text-xs text-gray-500 font-medium">Toplam Rivayet</div>
         <div id="statRivayetler" class="text-2xl font-bold text-amber-900 mt-1">—</div>
       </div>
-      <div class="bg-white p-4 rounded-xl border border-amber-200/80 shadow-sm">
+      <div class="stat-card bg-white p-4 rounded-xl border border-amber-200/70 shadow-sm">
         <div class="text-xs text-gray-500 font-medium">Matbu Paralel Kaydı</div>
         <div id="statParaleller" class="text-2xl font-bold text-amber-900 mt-1">—</div>
       </div>
-      <div class="bg-white p-4 rounded-xl border border-amber-200/80 shadow-sm">
+      <div class="stat-card bg-white p-4 rounded-xl border border-amber-200/70 shadow-sm">
         <div class="text-xs text-gray-500 font-medium">Kayıtlı Râvi</div>
         <div id="statRaviler" class="text-2xl font-bold text-amber-900 mt-1">—</div>
       </div>
-      <div class="bg-white p-4 rounded-xl border border-amber-200/80 shadow-sm col-span-2 md:col-span-1">
+      <div class="stat-card bg-white p-4 rounded-xl border border-amber-200/70 shadow-sm col-span-2 md:col-span-1">
         <div class="text-xs text-gray-500 font-medium">Görüntüyle Kontrol Edilen</div>
         <div id="statKontrol" class="text-2xl font-bold text-emerald-700 mt-1">—</div>
       </div>
     </div>
 
-    <nav class="bg-white rounded-xl border border-amber-200/80 shadow-sm overflow-x-auto flex">
-      <button data-tab="hadisBul" class="tab-btn tab-active px-5 py-3.5 text-sm whitespace-nowrap transition">🔍 Hadis Sorgula</button>
-      <button data-tab="belgeler" class="tab-btn px-5 py-3.5 text-sm text-gray-600 hover:bg-amber-50 whitespace-nowrap transition">🏺 Papirüs Belgeleri</button>
-      <button data-tab="raviler" class="tab-btn px-5 py-3.5 text-sm text-gray-600 hover:bg-amber-50 whitespace-nowrap transition">👤 Râviler & Tabakât</button>
-      <button data-tab="kilavuz" class="tab-btn px-5 py-3.5 text-sm text-gray-600 hover:bg-amber-50 whitespace-nowrap transition">ℹ️ İşaretler & Kısaltmalar</button>
-      <button data-tab="atif" class="tab-btn px-5 py-3.5 text-sm text-gray-600 hover:bg-amber-50 whitespace-nowrap transition">📌 Atıf & Kullanım Koşulları</button>
+    <nav aria-label="Veritabanı bölümleri" class="bg-white rounded-xl border border-amber-200/80 shadow-sm overflow-x-auto flex">
+      <button type="button" aria-current="page" data-tab="hadisBul" class="tab-btn tab-active px-5 py-3.5 text-sm whitespace-nowrap transition">🔍 Hadis Sorgula</button>
+      <button type="button" data-tab="belgeler" class="tab-btn px-5 py-3.5 text-sm text-gray-600 hover:bg-amber-50 whitespace-nowrap transition">🏺 Papirüs Belgeleri</button>
+      <button type="button" data-tab="raviler" class="tab-btn px-5 py-3.5 text-sm text-gray-600 hover:bg-amber-50 whitespace-nowrap transition">👤 Râviler & Tabakât</button>
+      <button type="button" data-tab="kilavuz" class="tab-btn px-5 py-3.5 text-sm text-gray-600 hover:bg-amber-50 whitespace-nowrap transition">ℹ️ İşaretler & Kısaltmalar</button>
+      <button type="button" data-tab="atif" class="tab-btn px-5 py-3.5 text-sm text-gray-600 hover:bg-amber-50 whitespace-nowrap transition">📌 Atıf & Kullanım Koşulları</button>
     </nav>
 
     <!-- 1. HADİS SORGULA -->
@@ -78,7 +121,7 @@
 
         <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
           <div class="md:col-span-6 relative">
-            <input type="text" id="hadisBulInput" placeholder="Arapça ibare (örn: من أحب أن يبسط) veya Türkçe kelime / kod..." class="w-full pl-4 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-600 focus:border-amber-600 text-base" />
+            <input type="search" autocomplete="off" aria-label="Hadis metni, isnad veya ibare ara" id="hadisBulInput" placeholder="Arapça ibare (örn: من أحب أن يبسط) veya Türkçe kelime / kod..." class="w-full pl-4 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-600 focus:border-amber-600 text-base" />
             <button id="clearHadisBul" class="hidden absolute right-3 top-3.5 text-gray-400 hover:text-gray-600 text-sm" aria-label="Temizle">✕</button>
           </div>
           <div class="md:col-span-3">
@@ -117,14 +160,14 @@
         <h3 id="hadisBulCount" class="text-sm font-semibold text-gray-700">Sorgu bekleniyor...</h3>
       </div>
 
-      <div id="hadisBulResults" class="space-y-4"></div>
+      <div id="hadisBulResults" class="space-y-4" aria-live="polite" aria-busy="false"></div>
       <div id="hadisBulPager" class="flex flex-wrap items-center justify-center gap-1.5 pt-2"></div>
     </section>
 
     <!-- 2. PAPİRÜS BELGELERİ -->
     <section id="tab-belgeler" class="tab-panel hidden space-y-4">
       <div class="bg-white p-4 rounded-xl border border-amber-200/80 shadow-sm flex flex-col md:flex-row gap-3">
-        <input type="text" id="belgeSearch" placeholder="Belge kodu, koleksiyon, şehir, tarih veya muhteva ara..." class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm" />
+        <input type="search" aria-label="Papirüs belgesi ara" id="belgeSearch" placeholder="Belge kodu, koleksiyon, şehir, tarih veya muhteva ara..." class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm" />
         <select id="belgeSehirFilter" class="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white md:w-56">
           <option value="">Tüm Şehirler</option>
         </select>
@@ -138,7 +181,7 @@
     <!-- 3. RÂVİLER -->
     <section id="tab-raviler" class="tab-panel hidden space-y-4">
       <div class="bg-white p-4 rounded-xl border border-amber-200/80 shadow-sm flex flex-col md:flex-row gap-3">
-        <input type="text" id="raviSearch" placeholder="Râvi adı, vefat yılı, bölge veya Takrîb değerlendirmesi ara..." class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm" />
+        <input type="search" aria-label="Râvi ara" id="raviSearch" placeholder="Râvi adı, vefat yılı, bölge veya Takrîb değerlendirmesi ara..." class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm" />
         <button id="raviSearchBtn" class="px-4 py-2 bg-amber-800 hover:bg-amber-700 text-white rounded-lg text-sm font-medium">Ara</button>
       </div>
       <div id="ravilerCount" class="text-sm font-semibold text-gray-700"></div>
@@ -168,7 +211,10 @@
     <!-- 5. ATIF -->
     <section id="tab-atif" class="tab-panel hidden space-y-4">
       <div class="bg-white p-6 rounded-xl border border-amber-200/80 shadow-sm space-y-4 text-sm text-gray-700 leading-relaxed">
-        <h2 class="text-lg font-bold text-gray-900">Araştırmacılar İçin Atıf ve Kullanım Koşulları</h2>
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <h2 class="text-lg font-bold text-gray-900">Araştırmacılar İçin Atıf ve Kullanım Koşulları</h2>
+          <div class="rounded-xl bg-stone-50 border border-stone-200 px-4 py-3"><div class="text-[10px] uppercase tracking-wider text-stone-500">Hazırlayan</div><div class="font-semibold text-stone-900">Prof. Dr. Hüseyin Akgün</div></div>
+        </div>
         <div class="bg-amber-50 border border-amber-200 p-4 rounded-xl">
           <div class="font-semibold text-amber-950 mb-1">Önerilen Akademik Atıf</div>
           <p class="font-mono text-xs text-gray-800">
@@ -185,14 +231,15 @@
 
   </main>
 
-  <footer class="bg-stone-900 text-stone-300 text-xs py-4 px-4 mt-8">
-    <div class="max-w-7xl mx-auto text-center sm:text-left">
-      Hadis Papirüsleri Veritabanı
+  <footer class="bg-[#211e19] text-stone-300 mt-10">
+    <div class="max-w-7xl mx-auto px-4 py-7 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div><div class="text-sm font-semibold text-amber-100">Hadis Papirüsleri Veritabanı</div><p class="text-[11px] text-stone-400 mt-1">Erken dönem hadis yazılı tanıklarına yönelik dijital araştırma aracı</p></div>
+      <div class="md:text-right"><div class="text-[10px] uppercase tracking-[.18em] text-stone-500">Hazırlayan</div><div class="text-sm font-semibold text-amber-100">Prof. Dr. Hüseyin Akgün</div><div class="text-[10px] text-stone-500 mt-1">© <span id="footerYear"></span> · Akademik kullanım</div></div>
     </div>
   </footer>
 
   <!-- Rivayet Detay Modalı -->
-  <div id="detailModal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 overflow-y-auto">
+  <div id="detailModal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
     <div class="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-amber-200">
       <div class="sticky top-0 bg-amber-950 text-amber-50 px-6 py-4 flex items-center justify-between z-10">
         <div>
@@ -208,6 +255,206 @@
   <script>
     const API_URL = 'https://script.google.com/macros/s/AKfycbxCjLFwvrygP546cQ5slL24bUY31t8GEFazC626a4EriTMrybvx6scRLAJqstehTaArSg/exec';
 
+    // Interface localization. Original database content (Arabic texts, names, catalog data)
+    // is intentionally preserved; only interface labels and explanatory text are translated.
+    const UI_EN = {
+      'Dijital araştırma platformu':'Digital research platform',
+      'Hadis Papirüsleri Veritabanı':'Hadith Papyri Database',
+      'Erken Dönem Papirüs Nüshaları, İsnad Ağları ve Matbu Paralel Sorgulama Sistemi':'A research tool for early papyrus witnesses, isnād networks, and printed parallels',
+      'Hazırlayan':'Prepared by',
+      'Dil':'Language',
+      '◈ Erken yazılı tanıklar':'◈ Early written witnesses',
+      '◈ İsnad ve metin karşılaştırması':'◈ Isnād and text comparison',
+      '◈ Matbu kaynaklarla paralel tarama':'◈ Parallel search across printed sources',
+      'Araştırma ve keşif alanı':'Research and discovery',
+      'Veritabanına hoş geldiniz':'Welcome to the database',
+      'Akademik kullanım için hazırlanmıştır':'Designed for academic use',
+      'Toplam Belge':'Total Documents',
+      'Toplam Rivayet':'Total Reports',
+      'Matbu Paralel Kaydı':'Printed Parallel Records',
+      'Kayıtlı Râvi':'Registered Transmitters',
+      'Görüntüyle Kontrol Edilen':'Verified Against Images',
+      'Veritabanı bölümleri':'Database sections',
+      '🔍 Hadis Sorgula':'🔍 Search Hadith',
+      '🏺 Papirüs Belgeleri':'🏺 Papyrus Documents',
+      '👤 Râviler & Tabakât':'👤 Transmitters & Generations',
+      'ℹ️ İşaretler & Kısaltmalar':'ℹ️ Symbols & Abbreviations',
+      '📌 Atıf & Kullanım Koşulları':'📌 Citation & Terms of Use',
+      'Hadis Metni, İsnad veya İbare Sorgulama':'Search Hadith Text, Isnād, or Phrase',
+      'Matbu bir hadisten 2-5 kelimelik Arapça ibare yapıştırın (hareke, hemze, elif ve noktalama otomatik temizlenerek iskelet üzerinden aranır) veya Türkçe konu / râvi adı / rivayet kodu yazın.':'Paste a 2–5-word Arabic phrase from a printed hadith (diacritics, hamza, alif, and punctuation are automatically normalized for searching), or enter a topic, transmitter name, or report code.',
+      'Arapça ibare (örn: من أحب أن يبسط) veya Türkçe kelime / kod...':'Arabic phrase (e.g. من أحب أن يبسط), keyword, or code...',
+      'Temizle':'Clear',
+      'Tüm Belgeler':'All Documents',
+      'Tüm Türler':'All Types',
+      'Merfû (M)':'Marfūʿ (M)',
+      'Mevkūf (Mv)':'Mawqūf (Mv)',
+      'Maktû (Mk)':'Maqṭūʿ (Mk)',
+      'Tüm filtreleri sıfırla':'Reset all filters',
+      'Sıfırla':'Reset',
+      'Arama İskeleti:':'Search Skeleton:',
+      'Örnek aramalar:':'Example searches:',
+      'Sıla-i rahim':'Maintaining family ties',
+      'Sorgu bekleniyor...':'Waiting for a search...',
+      'kelime eşleşmesi':'word match',
+      'İsnad Zinciri:':'Isnād Chain:',
+      'Kontrol:':'Verification:',
+      "Tarafü'l-Hadîs (Metin)":"Hadith Incipit (Text)",
+      'Başın kaynağı:':'Source of the incipit:',
+      'İncelendi':'Reviewed',
+      'Tarihsiz':'Undated',
+      'Neşir:':'Edition:',
+      'Rivayet Sayısı:':'Number of Reports:',
+      'Ek 1:':'Appendix 1:',
+      'Veritabanı:':'Database:',
+      'Vefat':'Died',
+      'Rivayet İncelemesi':'Report Analysis',
+      'Cilt/S.:':'Vol./p.:',
+      'No:':'No.:',
+      'Sayfa':'Page',
+      'Web Sorgu Arayüzü':'Web Search Interface',
+      'erişim tarihi:':'accessed:',
+      '• Akademik kullanım':'• Academic use',
+      'Belge kodu, koleksiyon, şehir, tarih veya muhteva ara...':'Search document code, collection, city, date, or contents...',
+      'Tüm Şehirler':'All Cities',
+      'Ara':'Search',
+      'Râvi adı, vefat yılı, bölge veya Takrîb değerlendirmesi ara...':'Search transmitter name, death date, region, or Taqrīb assessment...',
+      'Veritabanı İşaretleri, Kısaltmalar ve Kaynaklar':'Database Symbols, Abbreviations, and Sources',
+      'Tür':'Type',
+      'Kod / Kısaltma':'Code / Abbreviation',
+      'Açıklama / Künye':'Description / Bibliographic Reference',
+      'Araştırmacılar İçin Atıf ve Kullanım Koşulları':'Citation and Terms of Use for Researchers',
+      'Önerilen Akademik Atıf':'Suggested Academic Citation',
+      'Bu arayüz, öğrencilerin ve araştırmacıların ilgili rivayet, isnad, belge ve paralel kayıtlarını sorgulaması amacıyla sunulmaktadır.':'This interface is provided to enable students and researchers to search relevant reports, isnāds, documents, and parallel records.',
+      'Veritabanı kayıtlarının bütün olarak kopyalanması, izinsiz yeniden yayımlanması veya ticari amaçlarla/izin dışı veri madenciliğiyle kullanılması yasaktır.':'Copying the database records in their entirety, republishing them without permission, or using them commercially or for unauthorized data mining is prohibited.',
+      'Araştırmalarda kullanılan rivayet veya belge kayıtlarında ilgili papirüs künyesi ve çalışma açıkça kaynak gösterilmelidir.':'When citing reports or document records in research, the relevant papyrus reference and this project should be clearly acknowledged.',
+      'Erken dönem hadis yazılı tanıklarına yönelik dijital araştırma aracı':'A digital research tool for early written witnesses to hadith',
+      'Akademik kullanım':'Academic use',
+      'Rivayet Detayı':'Report Details',
+      'Kapat':'Close',
+      'Önceki':'Previous',
+      'Sonraki':'Next',
+      'Belgeler yükleniyor...':'Loading documents...',
+      'Eşleşen belge bulunamadı.':'No matching documents found.',
+      'Râviler yükleniyor...':'Loading transmitters...',
+      'Eşleşen râvi bulunamadı.':'No matching transmitters found.',
+      'Yükleniyor...':'Loading...',
+      'Rivayet ve paralel verileri getiriliyor...':'Loading report and parallel data...',
+      'İsnad (Papirüsteki Okuma)':'Isnād (Reading on the Papyrus)',
+      'Transkripsiyon:':'Transcription:',
+      "Tarafü'l-Hadîs (Arapça)":"Hadith Incipit (Arabic)",
+      'Başın Kaynağı:':'Source of the Incipit:',
+      'Filolojik ve Neşir Bilgileri':'Philological and Editorial Information',
+      'Neşirdeki No:':'Edition No.:',
+      'Kâil / Sahâbî:':'Speaker / Companion:',
+      'Rivayet Türü:':'Report Type:',
+      'Esas Okuma:':'Base Reading:',
+      'Tamamlama Usulü:':'Completion Method:',
+      'Kontrol Durumu:':'Verification Status:',
+      'Belge Bilgisi':'Document Information',
+      'Koleksiyon:':'Collection:',
+      'Tarihlendirme:':'Dating:',
+      'Tarihin Kaynağı:':'Basis for Dating:',
+      'Malzeme / Biçim:':'Material / Format:',
+      'Muhteva:':'Contents:',
+      'Araştırma Notu:':'Research Note:',
+      'Matbu Kaynaklardaki Paralelleri':'Parallels in Printed Sources',
+      'Bu rivayet için kayıtlı matbu paralel bulunmuyor.':'No printed parallel is currently recorded for this report.',
+      'Cilt/S.:':'Vol./Page:',
+      'Ortak Râvi / Tarik:':'Common Transmitter / Route:',
+      'Lafız İlişkisi:':'Textual Relationship:',
+      'Not:':'Note:',
+      'Bölge:':'Region:',
+      'Takrîb (İbn Hacer):':'Taqrīb (Ibn Ḥajar):',
+      'Geçtiği Belgeler:':'Documents in Which It Appears:',
+      'Varyantlar:':'Variants:',
+      'Bu Belgedeki Rivayetleri Sorgula →':'Search Reports in This Document →',
+      'Dijital Görüntü ↗':'Digital Image ↗',
+      'Veriler yüklenemedi: ':'Unable to load data: ',
+      'İstek zaman aşımına uğradı. Lütfen bağlantınızı kontrol edip yeniden deneyin.':'The request timed out. Please check your connection and try again.',
+      'Veritabanına bağlanılamadı. İnternet bağlantısını ve API erişim izinlerini kontrol edin.':'Could not connect to the database. Check your internet connection and API access permissions.',
+      'Sunucudan beklenen JSON biçiminde yanıt alınamadı. API dağıtımını kontrol edin.':'The server did not return the expected JSON response. Check the API deployment.',
+      'Sorgu başarısız oldu.':'The search failed.',
+      'Sorgu bekleniyor...':'Waiting for a search...'
+    };
+    const originalTextNodes = new WeakMap();
+    const originalAttributes = new WeakMap();
+    let currentLanguage = 'tr';
+    const UI_TR = Object.fromEntries(Object.entries(UI_EN).map(([tr, en]) => [en, tr]));
+    function translateValue(value) {
+      if (currentLanguage === 'tr') {
+        if (Object.prototype.hasOwnProperty.call(UI_TR, value)) return UI_TR[value];
+        return value.replace(/← Previous/g, '← Önceki').replace(/Next →/g, 'Sonraki →')
+          .replace(/(\d+) reports found/g, '$1 rivayet bulundu')
+          .replace(/showing (\d+)–(\d+)/g, '$1–$2 arası gösteriliyor')
+          .replace(/Page (\d+)\/(\d+)/g, 'Sayfa $1/$2')
+          .replace(/Searching\.\.\./g, 'Sorgulanıyor...')
+          .replace(/Search could not be completed\./g, 'Sorgu yapılamadı.');
+      }
+      if (Object.prototype.hasOwnProperty.call(UI_EN, value)) return UI_EN[value];
+      let translated = value;
+      translated = translated.replace(/(\d+) rivayet bulundu/g, '$1 reports found')
+        .replace(/(\d+) belge/g, '$1 documents').replace(/(\d+) râvi/g, '$1 transmitters')
+        .replace(/(\d+)–(\d+) arası gösteriliyor/g, 'showing $1–$2')
+        .replace(/Sayfa (\d+)\/(\d+)/g, 'Page $1/$2')
+        .replace(/Sorgulanıyor\.\.\./g, 'Searching...')
+        .replace(/Sorgu yapılamadı\./g, 'Search could not be completed.');
+      // Translate known interface phrases embedded in generated result templates.
+      Object.keys(UI_EN).sort((a,b) => b.length-a.length).forEach(source => {
+        if (source.length > 3 && translated.includes(source)) translated = translated.split(source).join(UI_EN[source]);
+      });
+      return translated;
+    }
+    function translateNode(node) {
+      if (node.nodeType === Node.TEXT_NODE) {
+        if (!originalTextNodes.has(node)) originalTextNodes.set(node, node.nodeValue);
+        const original = originalTextNodes.get(node);
+        const result = translateValue(original);
+        if (node.nodeValue !== result) node.nodeValue = result;
+      } else if (node.nodeType === Node.ELEMENT_NODE) {
+        ['placeholder','aria-label','title'].forEach(attr => {
+          if (node.hasAttribute(attr)) {
+            let saved = originalAttributes.get(node);
+            if (!saved) { saved = {}; originalAttributes.set(node, saved); }
+            if (!(attr in saved)) saved[attr] = node.getAttribute(attr);
+            const value = translateValue(saved[attr]);
+            if (node.getAttribute(attr) !== value) node.setAttribute(attr, value);
+          }
+        });
+        node.childNodes.forEach(translateNode);
+      }
+    }
+    function setLanguage(language) {
+      currentLanguage = language === 'en' ? 'en' : 'tr';
+      document.documentElement.lang = currentLanguage;
+      document.title = currentLanguage === 'en' ? 'Hadith Papyri Database' : 'Hadis Papirüsleri Veritabanı';
+      translateNode(document.body);
+      document.getElementById('languageSelect').value = currentLanguage;
+      try { localStorage.setItem('hadithPapyriLanguage', currentLanguage); } catch (_) {}
+      const date = document.getElementById('accessDate');
+      if (date) date.textContent = new Date().toLocaleDateString(currentLanguage === 'en' ? 'en-GB' : 'tr-TR');
+    }
+    const languageSelect = document.getElementById('languageSelect');
+    languageSelect.addEventListener('change', () => {
+      setLanguage(languageSelect.value);
+      const activeTab = document.querySelector('.tab-btn.tab-active')?.dataset.tab || 'hadisBul';
+      if (activeTab === 'hadisBul') runHadisBul(currentPage || 1);
+      else if (activeTab === 'belgeler' && loadedTabs.belgeler) renderBelgeler();
+      else if (activeTab === 'raviler' && loadedTabs.raviler) renderRaviler();
+      else if (activeTab === 'kilavuz' && loadedTabs.kilavuz) renderKilavuz();
+      if (!modal.classList.contains('hidden') && activeDetailCode) openRivayetModal(activeDetailCode);
+    });
+    try {
+      const savedLanguage = localStorage.getItem('hadithPapyriLanguage');
+      if (savedLanguage === 'en' || savedLanguage === 'tr') currentLanguage = savedLanguage;
+    } catch (_) {}
+    const localizationObserver = new MutationObserver(records => {
+      records.forEach(record => {
+        if (record.type === 'childList') record.addedNodes.forEach(translateNode);
+        else if (record.type === 'characterData') translateNode(record.target);
+      });
+    });
+    localizationObserver.observe(document.body, { childList:true, subtree:true, characterData:true });
+
     const PAGE_SIZE = 25;       // Hadis sorgu sonuçlarında sayfa başına kayıt
     const GRID_PAGE_SIZE = 24;  // Belgeler / Râviler sekmelerinde sayfa başına kart
 
@@ -218,6 +465,8 @@
     const gridState = { belgeler: { items: [], page: 1 }, raviler: { items: [], page: 1 } };
 
     document.getElementById('accessDate').textContent = new Date().toLocaleDateString('tr-TR');
+    document.getElementById('footerYear').textContent = new Date().getFullYear();
+    setLanguage(currentLanguage);
 
     function escapeHtml(str) {
       return String(str ?? '')
@@ -251,14 +500,25 @@
 
     async function callAPI(paramsObj) {
       const url = new URL(API_URL);
+      paramsObj = { ...paramsObj, lang: currentLanguage };
       Object.entries(paramsObj).forEach(([k, v]) => {
-        if (v !== undefined && v !== null && String(v) !== '') url.searchParams.set(k, v);
+        if (v !== undefined && v !== null && String(v) !== '') url.searchParams.set(k, String(v));
       });
-      const res = await fetch(url.toString());
-      if (!res.ok) throw new Error(`Ağ hatası (${res.status})`);
-      const data = await res.json();
-      if (!data.ok) throw new Error(data.error || 'Sorgu başarısız oldu.');
-      return data;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 20000);
+      try {
+        const res = await fetch(url.toString(), { method:'GET', headers:{'Accept':'application/json'}, signal:controller.signal, cache:'no-store' });
+        if (!res.ok) throw new Error(`Sunucu yanıtı alınamadı (HTTP ${res.status}).`);
+        const contentType = res.headers.get('content-type') || '';
+        if (!contentType.includes('application/json')) throw new Error('Sunucudan beklenen JSON biçiminde yanıt alınamadı. API dağıtımını kontrol edin.');
+        const data = await res.json();
+        if (!data || data.ok !== true) throw new Error(data?.error || 'Sorgu başarısız oldu.');
+        return data;
+      } catch (err) {
+        if (err.name === 'AbortError') throw new Error('İstek zaman aşımına uğradı. Lütfen bağlantınızı kontrol edip yeniden deneyin.');
+        if (err instanceof TypeError) throw new Error('Veritabanına bağlanılamadı. İnternet bağlantısını ve API erişim izinlerini kontrol edin.');
+        throw err;
+      } finally { clearTimeout(timeoutId); }
     }
 
     /* ---------- Sayfalama bileşeni ---------- */
@@ -282,7 +542,7 @@
         container.appendChild(b);
       };
 
-      mk('← Önceki', page - 1, { disabled: page === 1 });
+      mk(currentLanguage === 'en' ? '← Previous' : '← Önceki', page - 1, { disabled: page === 1 });
       let prev = 0;
       list.forEach(p => {
         if (p - prev > 1) {
@@ -294,7 +554,7 @@
         mk(String(p), p, { active: p === page });
         prev = p;
       });
-      mk('Sonraki →', page + 1, { disabled: page === totalPages });
+      mk(currentLanguage === 'en' ? 'Next →' : 'Sonraki →', page + 1, { disabled: page === totalPages });
     }
 
     /* ---------- İstatistik & filtreler ---------- */
@@ -327,9 +587,11 @@
         document.querySelectorAll('.tab-btn').forEach(b => {
           b.classList.remove('tab-active');
           b.classList.add('text-gray-600');
+          b.removeAttribute('aria-current');
         });
         btn.classList.add('tab-active');
         btn.classList.remove('text-gray-600');
+        btn.setAttribute('aria-current','page');
 
         const target = btn.dataset.tab;
         document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
@@ -450,6 +712,7 @@
       const pager = document.getElementById('hadisBulPager');
 
       countEl.textContent = 'Sorgulanıyor...';
+      container.setAttribute('aria-busy','true');
       container.innerHTML = loadingCards();
       pager.innerHTML = '';
 
@@ -467,6 +730,7 @@
         countEl.textContent = `${total} rivayet bulundu${ayrim} • ${from}–${to} arası gösteriliyor (Sayfa ${page}/${totalPages})`;
 
         if (matches.length === 0) {
+          container.setAttribute('aria-busy','false');
           container.innerHTML = `
             <div class="bg-white p-8 rounded-xl border border-amber-200 text-center text-gray-500">
               Aramanızla eşleşen papirüs rivayeti bulunamadı. Daha kısa bir ibare (2-3 kelime) veya farklı bir anahtar kelime deneyin.
@@ -475,6 +739,7 @@
         }
 
         container.innerHTML = matches.map(rivayetCard).join('');
+        container.setAttribute('aria-busy','false');
         buildPager(pager, page, totalPages, p => {
           runHadisBul(p);
           document.getElementById('hadisBulAnchor').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -482,6 +747,7 @@
         hideAlert();
       } catch (err) {
         if (seq !== searchSeq) return;
+        container.setAttribute('aria-busy','false');
         countEl.textContent = 'Sorgu yapılamadı.';
         container.innerHTML = `<div class="bg-white p-6 rounded-xl border border-red-200 text-red-700 text-sm">${escapeHtml(err.message)}</div>`;
       }
@@ -517,7 +783,9 @@
     document.getElementById('belgeSearch').addEventListener('keydown', e => { if (e.key === 'Enter') renderBelgeler(); });
 
     function belgeCard(b) {
-      const imgUrl = String(b['Dijital görüntü'] || '').startsWith('http') ? b['Dijital görüntü'] : '';
+      const rawImgUrl = String(b['Dijital görüntü'] || '').trim();
+      let imgUrl = '';
+      try { const parsed = new URL(rawImgUrl); if (parsed.protocol === 'https:' || parsed.protocol === 'http:') imgUrl = parsed.href; } catch (_) { /* geçersiz bağlantı gösterilmez */ }
       return `
         <div class="bg-white p-5 rounded-xl border border-amber-200/90 shadow-sm flex flex-col justify-between">
           <div>
@@ -637,20 +905,37 @@
 
     /* ---------- Detay modalı ---------- */
     const modal = document.getElementById('detailModal');
-    function closeModal() { modal.classList.add('hidden'); document.body.style.overflow = ''; }
+    let modalReturnFocus = null;
+    let detailRequestSeq = 0;
+    let activeDetailCode = '';
+    function closeModal() { modal.classList.add('hidden'); document.body.style.overflow = ''; if (modalReturnFocus?.focus) modalReturnFocus.focus(); }
     document.getElementById('closeModalBtn').addEventListener('click', closeModal);
     modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
-    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && !modal.classList.contains('hidden')) closeModal();
+      if (e.key === 'Tab' && !modal.classList.contains('hidden')) {
+        const focusable = [...modal.querySelectorAll('button:not([disabled]),a[href],input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])')];
+        if (!focusable.length) return;
+        const first = focusable[0], last = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      }
+    });
 
     async function openRivayetModal(rivayetKodu) {
+      activeDetailCode = rivayetKodu;
+      const requestSeq = ++detailRequestSeq;
+      modalReturnFocus = document.activeElement;
       modal.classList.remove('hidden');
       document.body.style.overflow = 'hidden';
+      document.getElementById('closeModalBtn').focus();
       document.getElementById('modalBelgeBadge').textContent = rivayetKodu;
       document.getElementById('modalTitle').textContent = 'Yükleniyor...';
       document.getElementById('modalBody').innerHTML = `<p class="text-sm text-gray-500">Rivayet ve paralel verileri getiriliyor...</p>`;
 
       try {
         const data = await callAPI({ action: 'detail', code: rivayetKodu });
+        if (requestSeq !== detailRequestSeq || modal.classList.contains('hidden')) return;
         const r = data.rivayet || {};
         const belge = data.belge || {};
         const paraleller = data.paraleller || [];
@@ -716,6 +1001,7 @@
               </div>`}
           </div>`;
       } catch (err) {
+        if (requestSeq !== detailRequestSeq || modal.classList.contains('hidden')) return;
         document.getElementById('modalBody').innerHTML = `<p class="text-sm text-red-600">${escapeHtml(err.message)}</p>`;
       }
     }
