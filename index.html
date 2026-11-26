@@ -308,7 +308,6 @@
       'Veritabanı:':'Database:',
       'Vefat':'Died',
       'Rivayet İncelemesi':'Report Analysis',
-      'Cilt/S.:':'Vol./p.:',
       'No:':'No.:',
       'Sayfa':'Page',
       'Web Sorgu Arayüzü':'Web Search Interface',
@@ -374,15 +373,32 @@
       'Veritabanına bağlanılamadı. İnternet bağlantısını ve API erişim izinlerini kontrol edin.':'Could not connect to the database. Check your internet connection and API access permissions.',
       'Sunucudan beklenen JSON biçiminde yanıt alınamadı. API dağıtımını kontrol edin.':'The server did not return the expected JSON response. Check the API deployment.',
       'Sorgu başarısız oldu.':'The search failed.',
-      'Sorgu bekleniyor...':'Waiting for a search...'
+      'İncele & Paraleller →':'Details & Parallels →',
+      'Papirüsteki İsnad':'Isnād on the Papyrus',
+      'Aramanızla eşleşen papirüs rivayeti bulunamadı. Daha kısa bir ibare (2-3 kelime) veya farklı bir anahtar kelime deneyin.':'No papyrus report matches your search. Try a shorter phrase (2–3 words) or a different keyword.',
+      'Sunucu yanıtı alınamadı (HTTP':'The server did not respond (HTTP',
+      'code parametresi gerekli.':'The "code" parameter is required.',
+      'Kayıt bulunamadı.':'Record not found.',
+      'Geçersiz action.':'Invalid action.',
+      'Sunucu hatası':'Server error',
+      'Dil seçimi':'Language selection',
+      'Hadis metni, isnad veya ibare ara':'Search hadith text, isnād, or phrase',
+      'Papirüs belgesi ara':'Search papyrus documents',
+      'Râvi ara':'Search transmitters',
+      'Hazırlayan Prof. Dr. Hüseyin Akgün':'Prepared by Prof. Dr. Hüseyin Akgün',
+      'Erken dönem hadis papirüsleri, isnad ağları ve matbu kaynaklardaki paraleller için akademik araştırma veritabanı.':'An academic research database of early hadith papyri, isnād networks, and parallels in printed sources.'
     };
+    // Şablon içindeki dinamik metinler için doğrudan çeviri (gözlemciye bağımlı kalmaz).
+    function t(trText) { return currentLanguage === 'en' && UI_EN[trText] ? UI_EN[trText] : trText; }
     const originalTextNodes = new WeakMap();
     const originalAttributes = new WeakMap();
     let currentLanguage = 'tr';
     const UI_TR = Object.fromEntries(Object.entries(UI_EN).map(([tr, en]) => [en, tr]));
     function translateValue(value) {
+      const trimmed = value.trim();
       if (currentLanguage === 'tr') {
         if (Object.prototype.hasOwnProperty.call(UI_TR, value)) return UI_TR[value];
+        if (trimmed && Object.prototype.hasOwnProperty.call(UI_TR, trimmed)) return value.replace(trimmed, UI_TR[trimmed]);
         return value.replace(/← Previous/g, '← Önceki').replace(/Next →/g, 'Sonraki →')
           .replace(/(\d+) reports found/g, '$1 rivayet bulundu')
           .replace(/showing (\d+)–(\d+)/g, '$1–$2 arası gösteriliyor')
@@ -391,17 +407,19 @@
           .replace(/Search could not be completed\./g, 'Sorgu yapılamadı.');
       }
       if (Object.prototype.hasOwnProperty.call(UI_EN, value)) return UI_EN[value];
+      if (trimmed && Object.prototype.hasOwnProperty.call(UI_EN, trimmed)) return value.replace(trimmed, UI_EN[trimmed]);
       let translated = value;
       translated = translated.replace(/(\d+) rivayet bulundu/g, '$1 reports found')
         .replace(/(\d+) belge/g, '$1 documents').replace(/(\d+) râvi/g, '$1 transmitters')
         .replace(/(\d+)–(\d+) arası gösteriliyor/g, 'showing $1–$2')
         .replace(/Sayfa (\d+)\/(\d+)/g, 'Page $1/$2')
         .replace(/Sorgulanıyor\.\.\./g, 'Searching...')
-        .replace(/Sorgu yapılamadı\./g, 'Search could not be completed.');
-      // Translate known interface phrases embedded in generated result templates.
-      Object.keys(UI_EN).sort((a,b) => b.length-a.length).forEach(source => {
-        if (source.length > 3 && translated.includes(source)) translated = translated.split(source).join(UI_EN[source]);
-      });
+        .replace(/Sorgu yapılamadı\./g, 'Search could not be completed.')
+        .replace(/Web Sorgu Arayüzü/g, 'Web Search Interface')
+        .replace(/erişim tarihi:/g, 'accessed:')
+        .replace(/Akademik kullanım/g, 'Academic use')
+        .replace(/Veriler yüklenemedi: /g, 'Unable to load data: ')
+        .replace(/Sunucu yanıtı alınamadı \(HTTP/g, 'The server did not respond (HTTP');
       return translated;
     }
     function translateNode(node) {
@@ -427,6 +445,11 @@
       currentLanguage = language === 'en' ? 'en' : 'tr';
       document.documentElement.lang = currentLanguage;
       document.title = currentLanguage === 'en' ? 'Hadith Papyri Database' : 'Hadis Papirüsleri Veritabanı';
+      const metaDesc = document.querySelector('meta[name="description"]');
+      if (metaDesc) {
+        if (!metaDesc.dataset.tr) metaDesc.dataset.tr = metaDesc.content;
+        metaDesc.content = currentLanguage === 'en' ? UI_EN[metaDesc.dataset.tr] : metaDesc.dataset.tr;
+      }
       translateNode(document.body);
       document.getElementById('languageSelect').value = currentLanguage;
       try { localStorage.setItem('hadithPapyriLanguage', currentLanguage); } catch (_) {}
@@ -436,11 +459,12 @@
     const languageSelect = document.getElementById('languageSelect');
     languageSelect.addEventListener('change', () => {
       setLanguage(languageSelect.value);
-      const activeTab = document.querySelector('.tab-btn.tab-active')?.dataset.tab || 'hadisBul';
-      if (activeTab === 'hadisBul') runHadisBul(currentPage || 1);
-      else if (activeTab === 'belgeler' && loadedTabs.belgeler) renderBelgeler();
-      else if (activeTab === 'raviler' && loadedTabs.raviler) renderRaviler();
-      else if (activeTab === 'kilavuz' && loadedTabs.kilavuz) renderKilavuz();
+      // Refresh all previously opened data tabs so server-side translated values
+      // replace the cached Turkish records, regardless of which tab is visible.
+      runHadisBul(currentPage || 1);
+      if (loadedTabs.belgeler) renderBelgeler();
+      if (loadedTabs.raviler) renderRaviler();
+      if (loadedTabs.kilavuz) renderKilavuz();
       if (!modal.classList.contains('hidden') && activeDetailCode) openRivayetModal(activeDetailCode);
     });
     try {
@@ -464,7 +488,7 @@
     const loadedTabs = { belgeler: false, raviler: false, kilavuz: false };
     const gridState = { belgeler: { items: [], page: 1 }, raviler: { items: [], page: 1 } };
 
-    document.getElementById('accessDate').textContent = new Date().toLocaleDateString('tr-TR');
+    document.getElementById('accessDate').textContent = new Date().toLocaleDateString(currentLanguage === 'en' ? 'en-GB' : 'tr-TR');
     document.getElementById('footerYear').textContent = new Date().getFullYear();
     setLanguage(currentLanguage);
 
@@ -474,12 +498,18 @@
         .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
 
+    function hasText(val) {
+      const s = String(val ?? '').trim();
+      return s !== '' && s !== '—' && s !== '-' && s !== '–';
+    }
+
     function toArabicSkeleton(text) {
       if (!text) return '';
       return String(text)
         .replace(/[ً-ٰٟ]/g, '')
         .replace(/ـ/g, '')
-        .replace(/[\[\]\(\)\{\}«»"“”'،؛؟\.,!:\-—–…∗†‡]/g, ' ')
+        .replace(/[\[\]\(\)\{\}<>«»"“”'؟?\\]/g, '')
+        .replace(/[،؛\.,!:\-—–…\/|∗†‡]/g, ' ')
         .replace(/[أإآاٱء]/g, '')
         .replace(/ؤ/g, 'و')
         .replace(/ئ/g, 'ي')
@@ -505,10 +535,10 @@
         if (v !== undefined && v !== null && String(v) !== '') url.searchParams.set(k, String(v));
       });
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 20000);
+      const timeoutId = setTimeout(() => controller.abort(), currentLanguage === 'en' ? 90000 : 30000);
       try {
         const res = await fetch(url.toString(), { method:'GET', headers:{'Accept':'application/json'}, signal:controller.signal, cache:'no-store' });
-        if (!res.ok) throw new Error(`Sunucu yanıtı alınamadı (HTTP ${res.status}).`);
+        if (!res.ok) throw new Error(`${t('Sunucu yanıtı alınamadı (HTTP')} ${res.status}).`);
         const contentType = res.headers.get('content-type') || '';
         if (!contentType.includes('application/json')) throw new Error('Sunucudan beklenen JSON biçiminde yanıt alınamadı. API dağıtımını kontrol edin.');
         const data = await res.json();
@@ -666,32 +696,32 @@
               <span class="text-xs font-medium bg-stone-100 text-stone-700 px-2 py-1 rounded">${escapeHtml(r.belgeKodu)} (${escapeHtml(r.yuzSatir || '-')})</span>
               ${r.tarih ? `<span class="text-xs font-medium bg-blue-50 text-blue-800 px-2 py-1 rounded">📅 ${escapeHtml(r.tarih)}</span>` : ''}
               ${r.tur ? `<span class="text-xs font-medium bg-purple-50 text-purple-800 px-2 py-1 rounded">${escapeHtml(r.tur)}</span>` : ''}
-              ${r.eslesme === 'kelime' ? `<span class="text-xs font-medium bg-orange-50 text-orange-800 border border-orange-200 px-2 py-1 rounded" title="Aranan kelimelerin hepsi aynı metinde geçiyor, ancak ibare bitişik değil (araya başka kelimeler giriyor).">kelime eşleşmesi</span>` : ''}
+              ${r.eslesme === 'kelime' ? `<span class="text-xs font-medium bg-orange-50 text-orange-800 border border-orange-200 px-2 py-1 rounded" title="${currentLanguage === 'en' ? 'All search words occur in the same text, but not consecutively.' : 'Aranan kelimelerin hepsi aynı metinde geçiyor, ancak ibare bitişik değil (araya başka kelimeler giriyor).'}">${currentLanguage === 'en' ? 'word match' : 'kelime eşleşmesi'}</span>` : ''}
               ${r.konu ? `<span class="text-xs font-semibold text-amber-800">• ${escapeHtml(r.konu)}</span>` : ''}
             </div>
             <button data-code="${escapeHtml(r.rivayetKodu)}" class="detail-btn text-xs font-semibold bg-amber-800 hover:bg-amber-700 text-white px-3 py-1.5 rounded-lg transition">
-              İncele & Paraleller →
+              ${t('İncele & Paraleller →')}
             </button>
           </div>
 
           <div class="mt-3 space-y-2">
             ${r.isnadArapca ? `
               <div class="bg-stone-50 p-2.5 rounded-lg border border-stone-200/70">
-                <div class="text-[11px] font-semibold text-stone-500 uppercase mb-0.5">Papirüsteki İsnad</div>
+                <div class="text-[11px] font-semibold text-stone-500 uppercase mb-0.5">${t('Papirüsteki İsnad')}</div>
                 <div class="arabic-text text-stone-700 text-lg">${escapeHtml(r.isnadArapca)}</div>
               </div>` : ''}
             <div class="bg-amber-50/60 p-3 rounded-lg border border-amber-200/60">
               <div class="flex justify-between items-center mb-0.5">
-                <span class="text-[11px] font-semibold text-amber-800 uppercase">Tarafü'l-Hadîs (Metin)</span>
-                <span class="text-[11px] text-gray-500">Başın kaynağı: ${escapeHtml(r.basinKaynagi || '-')}</span>
+                <span class="text-[11px] font-semibold text-amber-800 uppercase">${t("Tarafü'l-Hadîs (Metin)")}</span>
+                <span class="text-[11px] text-gray-500">${t('Başın kaynağı:')} ${escapeHtml(r.basinKaynagi || '-')}</span>
               </div>
               <div class="arabic-text text-gray-900 font-bold">${escapeHtml(r.tarafArapca || '—')}</div>
             </div>
           </div>
 
           <div class="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-gray-600">
-            <div><strong>İsnad Zinciri:</strong> ${escapeHtml(r.isnadTranskripsiyon || '—')}</div>
-            <div><strong>Kontrol:</strong> ${escapeHtml(r.kontrolDuzeyi || '—')}</div>
+            <div><strong>${t('İsnad Zinciri:')}</strong> ${escapeHtml(r.isnadTranskripsiyon || '—')}</div>
+            <div><strong>${t('Kontrol:')}</strong> ${escapeHtml(r.kontrolDuzeyi || '—')}</div>
           </div>
         </div>`;
     }
@@ -727,13 +757,15 @@
         const to = (page - 1) * PAGE_SIZE + matches.length;
         const ayrim = (data.wordMatches > 0)
           ? ` — ${data.exactMatches} ibare eşleşmesi, ${data.wordMatches} kelime eşleşmesi` : '';
-        countEl.textContent = `${total} rivayet bulundu${ayrim} • ${from}–${to} arası gösteriliyor (Sayfa ${page}/${totalPages})`;
+        countEl.textContent = currentLanguage === 'en'
+          ? `${total} reports found${data.wordMatches > 0 ? ` — ${data.exactMatches} phrase matches, ${data.wordMatches} word matches` : ''} • showing ${from}–${to} (Page ${page}/${totalPages})`
+          : `${total} rivayet bulundu${ayrim} • ${from}–${to} arası gösteriliyor (Sayfa ${page}/${totalPages})`;
 
         if (matches.length === 0) {
           container.setAttribute('aria-busy','false');
           container.innerHTML = `
             <div class="bg-white p-8 rounded-xl border border-amber-200 text-center text-gray-500">
-              Aramanızla eşleşen papirüs rivayeti bulunamadı. Daha kısa bir ibare (2-3 kelime) veya farklı bir anahtar kelime deneyin.
+              ${t('Aramanızla eşleşen papirüs rivayeti bulunamadı. Daha kısa bir ibare (2-3 kelime) veya farklı bir anahtar kelime deneyin.')}
             </div>`;
           return;
         }
@@ -768,7 +800,9 @@
       const slice = st.items.slice(start, start + GRID_PAGE_SIZE);
 
       document.getElementById(countId).textContent = st.items.length
-        ? `${st.items.length} ${noun} • ${start + 1}–${start + slice.length} arası gösteriliyor (Sayfa ${st.page}/${totalPages})` : '';
+        ? (currentLanguage === 'en'
+            ? `${st.items.length} ${noun === 'belge' ? 'documents' : 'transmitters'} • showing ${start + 1}–${start + slice.length} (Page ${st.page}/${totalPages})`
+            : `${st.items.length} ${noun} • ${start + 1}–${start + slice.length} arası gösteriliyor (Sayfa ${st.page}/${totalPages})`) : '';
       grid.innerHTML = slice.map(cardFn).join('');
       buildPager(document.getElementById(pagerId), st.page, totalPages, p => {
         st.page = p;
@@ -785,30 +819,40 @@
     function belgeCard(b) {
       const rawImgUrl = String(b['Dijital görüntü'] || '').trim();
       let imgUrl = '';
-      try { const parsed = new URL(rawImgUrl); if (parsed.protocol === 'https:' || parsed.protocol === 'http:') imgUrl = parsed.href; } catch (_) { /* geçersiz bağlantı gösterilmez */ }
+      let isCatalogOnly = false;
+      const urlMatch = rawImgUrl.match(/https?:\/\/[^\s)>,;]+/);
+      if (urlMatch) {
+        try {
+          const parsed = new URL(urlMatch[0]);
+          if (parsed.protocol === 'https:' || parsed.protocol === 'http:') {
+            imgUrl = parsed.href;
+            isCatalogOnly = !/^https?:\/\//i.test(rawImgUrl);
+          }
+        } catch (_) { /* geçersiz bağlantı gösterilmez */ }
+      }
       return `
         <div class="bg-white p-5 rounded-xl border border-amber-200/90 shadow-sm flex flex-col justify-between">
           <div>
             <div class="flex items-start justify-between gap-2">
               <div>
                 <span class="text-xs font-bold uppercase tracking-wider text-amber-800 bg-amber-100 px-2 py-0.5 rounded">${escapeHtml(b['Belge kodu'])}</span>
-                ${b['Kitapta incelendi (†)'] ? `<span class="ml-1 text-xs font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded">† İncelendi</span>` : ''}
+                ${String(b['Kitapta incelendi (†)'] || '').includes('†') ? `<span class="ml-1 text-xs font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded">${currentLanguage === 'en' ? '† Examined' : '† İncelendi'}</span>` : ''}
                 <h3 class="text-base font-bold text-gray-900 mt-1.5">${escapeHtml(b['Koleksiyon'] || b['Belge kodu'])}</h3>
-                <p class="text-xs text-gray-500">${escapeHtml(b['Şehir'])} • Envanter: ${escapeHtml(b['Envanter'] || '-')}</p>
+                <p class="text-xs text-gray-500">${escapeHtml(b['Şehir'])} • ${currentLanguage === 'en' ? 'Inventory:' : 'Envanter:'} ${escapeHtml(b['Envanter'] || '-')}</p>
               </div>
-              <span class="text-xs font-semibold bg-stone-100 text-stone-800 px-2.5 py-1 rounded-lg border border-stone-200 whitespace-nowrap">${escapeHtml(b['Tarih'] || 'Tarihsiz')}</span>
+              <span class="text-xs font-semibold bg-stone-100 text-stone-800 px-2.5 py-1 rounded-lg border border-stone-200 whitespace-nowrap">${escapeHtml(b['Tarih'] || (currentLanguage === 'en' ? 'Undated' : 'Tarihsiz'))}</span>
             </div>
             <div class="mt-3 text-xs text-gray-700 space-y-1.5 bg-stone-50 p-3 rounded-lg">
-              <div><strong>Muhteva:</strong> ${escapeHtml(b['Muhteva'] || '—')}</div>
-              <div><strong>Malzeme / Biçim:</strong> ${escapeHtml(b['Malzeme'] || '-')} / ${escapeHtml(b['Biçim'] || '-')}</div>
-              <div><strong>Neşir:</strong> ${escapeHtml(b['Neşir'] || '—')}</div>
-              <div><strong>Rivayet Sayısı:</strong> Ek 1: ${escapeHtml(b['Rivayet sayısı (Ek 1)'] || '-')} | Veritabanı: ${escapeHtml(b['Veritabanındaki rivayet satırı'] || '0')}</div>
-              ${b['Not'] ? `<div class="text-gray-600 pt-1 border-t border-stone-200"><strong>Not:</strong> ${escapeHtml(b['Not'])}</div>` : ''}
+              <div><strong>${currentLanguage === 'en' ? 'Contents:' : 'Muhteva:'}</strong> ${escapeHtml(b['Muhteva'] || '—')}</div>
+              <div><strong>${currentLanguage === 'en' ? 'Material / Format:' : 'Malzeme / Biçim:'}</strong> ${escapeHtml(b['Malzeme'] || '-')} / ${escapeHtml(b['Biçim'] || '-')}</div>
+              <div><strong>${currentLanguage === 'en' ? 'Edition:' : 'Neşir:'}</strong> ${escapeHtml(b['Neşir'] || '—')}</div>
+              <div><strong>${currentLanguage === 'en' ? 'Number of reports:' : 'Rivayet Sayısı:'}</strong> ${t('Ek 1:')} ${escapeHtml(b['Rivayet sayısı (Ek 1)'] || '-')} | ${t('Veritabanı:')} ${escapeHtml(b['Veritabanındaki rivayet satırı'] || '0')}</div>
+              ${hasText(b['Not']) ? `<div class="text-gray-600 pt-1 border-t border-stone-200"><strong>${t('Not:')}</strong> ${escapeHtml(b['Not'])}</div>` : ''}
             </div>
           </div>
           <div class="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
-            <button data-belge="${escapeHtml(b['Belge kodu'])}" class="belge-filter-btn text-xs font-semibold text-amber-800 hover:text-amber-950">Bu Belgedeki Rivayetleri Sorgula →</button>
-            ${imgUrl ? `<a href="${escapeHtml(imgUrl)}" target="_blank" rel="noopener" class="text-xs font-medium bg-blue-50 hover:bg-blue-100 text-blue-700 px-2.5 py-1 rounded">Dijital Görüntü ↗</a>` : ''}
+            <button data-belge="${escapeHtml(b['Belge kodu'])}" class="belge-filter-btn text-xs font-semibold text-amber-800 hover:text-amber-950">${t('Bu Belgedeki Rivayetleri Sorgula →')}</button>
+            ${imgUrl ? `<a href="${escapeHtml(imgUrl)}" target="_blank" rel="noopener" title="${escapeHtml(rawImgUrl)}" class="text-xs font-medium bg-blue-50 hover:bg-blue-100 text-blue-700 px-2.5 py-1 rounded">${isCatalogOnly ? (currentLanguage === 'en' ? 'Catalog Record ↗' : 'Katalog Kaydı ↗') : t('Dijital Görüntü ↗')}</a>` : ''}
           </div>
         </div>`;
     }
@@ -854,16 +898,16 @@
           <div class="flex items-start justify-between gap-2">
             <div>
               <h3 class="font-bold text-gray-900 text-base">${escapeHtml(r['Standart yazım'])}</h3>
-              ${r['Varyant yazımlar'] ? `<div class="text-xs text-gray-500">Varyantlar: ${escapeHtml(r['Varyant yazımlar'])}</div>` : ''}
+              ${hasText(r['Varyant yazımlar']) ? `<div class="text-xs text-gray-500">${currentLanguage === 'en' ? 'Variant spellings:' : 'Varyantlar:'} ${escapeHtml(r['Varyant yazımlar'])}</div>` : ''}
             </div>
-            <span class="text-xs font-semibold bg-amber-100 text-amber-950 px-2 py-1 rounded whitespace-nowrap">v. ${escapeHtml(r['Vefat (h./m.)'] || '?')}</span>
+            <span class="text-xs font-semibold bg-amber-100 text-amber-950 px-2 py-1 rounded whitespace-nowrap">${currentLanguage === 'en' ? 'd.' : 'v.'} ${escapeHtml(r['Vefat (h./m.)'] || '?')}</span>
           </div>
           <div class="text-xs text-gray-700 space-y-1 bg-stone-50 p-3 rounded-lg">
-            <div><strong>Bölge:</strong> ${escapeHtml(r['Bölge'] || '—')}</div>
-            <div><strong>Takrîb (İbn Hacer):</strong> ${escapeHtml(r['Takrîb (İbn Hacer)'] || '—')}</div>
-            <div><strong>Geçtiği Belgeler:</strong> <span class="text-amber-900 font-medium">${escapeHtml(r['Papirüs isnadlarında geçtiği belgeler (rivayet; otomatik, aday eşleşme)'] || '—')}</span></div>
+            <div><strong>${currentLanguage === 'en' ? 'Region:' : 'Bölge:'}</strong> ${escapeHtml(r['Bölge'] || '—')}</div>
+            <div><strong>${currentLanguage === 'en' ? 'Taqrīb (Ibn Ḥajar):' : 'Takrîb (İbn Hacer):'}</strong> ${escapeHtml(r['Takrîb (İbn Hacer)'] || '—')}</div>
+            <div><strong>${currentLanguage === 'en' ? 'Documents in which it appears:' : 'Geçtiği Belgeler:'}</strong> <span class="text-amber-900 font-medium">${escapeHtml(r['Papirüs isnadlarında geçtiği belgeler (rivayet; otomatik, aday eşleşme)'] || '—')}</span></div>
           </div>
-          ${r['Kaynak / not'] ? `<div class="text-xs text-gray-500">${escapeHtml(r['Kaynak / not'])}</div>` : ''}
+          ${hasText(r['Kaynak / not']) ? `<div class="text-xs text-gray-500">${escapeHtml(r['Kaynak / not'])}</div>` : ''}
         </div>`;
     }
 
@@ -930,8 +974,8 @@
       document.body.style.overflow = 'hidden';
       document.getElementById('closeModalBtn').focus();
       document.getElementById('modalBelgeBadge').textContent = rivayetKodu;
-      document.getElementById('modalTitle').textContent = 'Yükleniyor...';
-      document.getElementById('modalBody').innerHTML = `<p class="text-sm text-gray-500">Rivayet ve paralel verileri getiriliyor...</p>`;
+      document.getElementById('modalTitle').textContent = t('Yükleniyor...');
+      document.getElementById('modalBody').innerHTML = `<p class="text-sm text-gray-500">${t('Rivayet ve paralel verileri getiriliyor...')}</p>`;
 
       try {
         const data = await callAPI({ action: 'detail', code: rivayetKodu });
@@ -941,19 +985,19 @@
         const paraleller = data.paraleller || [];
 
         document.getElementById('modalBelgeBadge').textContent = `${r['Belge kodu'] || ''} • ${r['Yüz/satır'] || ''}`;
-        document.getElementById('modalTitle').textContent = `${r['Rivayet kodu'] || rivayetKodu} — ${r['Konu'] || 'Rivayet İncelemesi'}`;
+        document.getElementById('modalTitle').textContent = `${r['Rivayet kodu'] || rivayetKodu} — ${r['Konu'] || t('Rivayet İncelemesi')}`;
 
         document.getElementById('modalBody').innerHTML = `
           <div class="space-y-3">
             <div class="bg-stone-50 p-4 rounded-xl border border-stone-200">
-              <div class="text-xs font-bold text-stone-500 uppercase mb-1">İsnad (Papirüsteki Okuma)</div>
+              <div class="text-xs font-bold text-stone-500 uppercase mb-1">${t('İsnad (Papirüsteki Okuma)')}</div>
               <div class="arabic-text text-stone-800">${escapeHtml(r['İsnad (Arapça, papirüsteki okuma)'] || '—')}</div>
-              <div class="text-xs text-stone-600 mt-2 pt-2 border-t border-stone-200"><strong>Transkripsiyon:</strong> ${escapeHtml(r['İsnad (transkripsiyon)'] || '—')}</div>
+              <div class="text-xs text-stone-600 mt-2 pt-2 border-t border-stone-200"><strong>${t('Transkripsiyon:')}</strong> ${escapeHtml(r['İsnad (transkripsiyon)'] || '—')}</div>
             </div>
             <div class="bg-amber-50 p-4 rounded-xl border border-amber-200">
               <div class="flex justify-between text-xs font-bold text-amber-900 uppercase mb-1">
-                <span>Tarafü'l-Hadîs (Arapça)</span>
-                <span>Başın Kaynağı: ${escapeHtml(r['Başın kaynağı'] || '-')}</span>
+                <span>${t("Tarafü'l-Hadîs (Arapça)")}</span>
+                <span>${t('Başın Kaynağı:')} ${escapeHtml(r['Başın kaynağı'] || '-')}</span>
               </div>
               <div class="arabic-text text-gray-950 font-bold">${escapeHtml(r["Tarafü'l-hadîs (Arapça)"] || '—')}</div>
             </div>
@@ -961,42 +1005,42 @@
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
             <div class="bg-white p-4 rounded-xl border border-gray-200 space-y-1.5">
-              <h4 class="font-bold text-gray-800 text-sm mb-2">Filolojik ve Neşir Bilgileri</h4>
-              <div><strong>Neşirdeki No:</strong> ${escapeHtml(r['Neşirdeki no.'] || '—')}</div>
-              <div><strong>Kâil / Sahâbî:</strong> ${escapeHtml(r['Kâil'] || '—')}</div>
-              <div><strong>Rivayet Türü:</strong> ${escapeHtml(r['Tür (M/Mv/Mk)'] || '—')}</div>
-              <div><strong>Esas Okuma:</strong> ${escapeHtml(r['Okuma'] || '—')}</div>
-              <div><strong>Tamamlama Usulü:</strong> ${escapeHtml(r['Tamamlama'] || '—')}</div>
-              <div><strong>Kontrol Durumu:</strong> ${escapeHtml(r['Kontrol durumu'] || '—')} (${escapeHtml(r['Kontrol düzeyi'] || '-')})</div>
+              <h4 class="font-bold text-gray-800 text-sm mb-2">${t('Filolojik ve Neşir Bilgileri')}</h4>
+              <div><strong>${t('Neşirdeki No:')}</strong> ${escapeHtml(r['Neşirdeki no.'] || '—')}</div>
+              <div><strong>${t('Kâil / Sahâbî:')}</strong> ${escapeHtml(r['Kâil'] || '—')}</div>
+              <div><strong>${t('Rivayet Türü:')}</strong> ${escapeHtml(r['Tür (M/Mv/Mk)'] || '—')}</div>
+              <div><strong>${t('Esas Okuma:')}</strong> ${escapeHtml(r['Okuma'] || '—')}</div>
+              <div><strong>${t('Tamamlama Usulü:')}</strong> ${escapeHtml(r['Tamamlama'] || '—')}</div>
+              <div><strong>${t('Kontrol Durumu:')}</strong> ${escapeHtml(r['Kontrol durumu'] || '—')} (${escapeHtml(r['Kontrol düzeyi'] || '-')})</div>
             </div>
             <div class="bg-white p-4 rounded-xl border border-gray-200 space-y-1.5">
-              <h4 class="font-bold text-gray-800 text-sm mb-2">Belge Bilgisi (${escapeHtml(r['Belge kodu'] || '')})</h4>
-              <div><strong>Koleksiyon:</strong> ${escapeHtml(belge['Koleksiyon'] || '—')} (${escapeHtml(belge['Şehir'] || '-')})</div>
-              <div><strong>Tarihlendirme:</strong> ${escapeHtml(belge['Tarih'] || '—')}</div>
-              <div><strong>Tarihin Kaynağı:</strong> ${escapeHtml(belge['Tarihin kaynağı'] || '—')}</div>
-              <div><strong>Malzeme / Biçim:</strong> ${escapeHtml(belge['Malzeme'] || '-')} / ${escapeHtml(belge['Biçim'] || '-')}</div>
-              <div><strong>Muhteva:</strong> ${escapeHtml(belge['Muhteva'] || '—')}</div>
+              <h4 class="font-bold text-gray-800 text-sm mb-2">${t('Belge Bilgisi')} (${escapeHtml(r['Belge kodu'] || '')})</h4>
+              <div><strong>${t('Koleksiyon:')}</strong> ${escapeHtml(belge['Koleksiyon'] || '—')} (${escapeHtml(belge['Şehir'] || '-')})</div>
+              <div><strong>${t('Tarihlendirme:')}</strong> ${escapeHtml(belge['Tarih'] || '—')}</div>
+              <div><strong>${t('Tarihin Kaynağı:')}</strong> ${escapeHtml(belge['Tarihin kaynağı'] || '—')}</div>
+              <div><strong>${currentLanguage === 'en' ? 'Material / Format:' : 'Malzeme / Biçim:'}</strong> ${escapeHtml(belge['Malzeme'] || '-')} / ${escapeHtml(belge['Biçim'] || '-')}</div>
+              <div><strong>${currentLanguage === 'en' ? 'Contents:' : 'Muhteva:'}</strong> ${escapeHtml(belge['Muhteva'] || '—')}</div>
             </div>
           </div>
 
-          ${r['Not'] ? `
+          ${hasText(r['Not']) ? `
             <div class="bg-blue-50/70 p-4 rounded-xl border border-blue-200 text-xs text-blue-950">
-              <strong>Araştırma Notu:</strong> ${escapeHtml(r['Not'])}
+              <strong>${t('Araştırma Notu:')}</strong> ${escapeHtml(r['Not'])}
             </div>` : ''}
 
           <div>
-            <h4 class="font-bold text-gray-800 text-base mb-3">Matbu Kaynaklardaki Paralelleri (${paraleller.length})</h4>
-            ${paraleller.length === 0 ? '<p class="text-xs text-gray-500">Bu rivayet için kayıtlı matbu paralel bulunmuyor.</p>' : `
+            <h4 class="font-bold text-gray-800 text-base mb-3">${t('Matbu Kaynaklardaki Paralelleri')} (${paraleller.length})</h4>
+            ${paraleller.length === 0 ? `<p class="text-xs text-gray-500">${t('Bu rivayet için kayıtlı matbu paralel bulunmuyor.')}</p>` : `
               <div class="space-y-2.5">
                 ${paraleller.map(p => `
                   <div class="p-3.5 rounded-xl border border-gray-200 bg-gray-50 text-xs space-y-1">
                     <div class="flex flex-wrap justify-between gap-2">
                       <span class="font-bold text-amber-950 text-sm">${escapeHtml(p['Eser'] || '')}</span>
-                      <span class="bg-white px-2 py-0.5 rounded border border-gray-300 font-medium">Cilt/S.: ${escapeHtml(p['Cilt/sayfa'] || '-')} | No: <strong>${escapeHtml(p['Numara'] || '-')}</strong></span>
+                      <span class="bg-white px-2 py-0.5 rounded border border-gray-300 font-medium">${t('Cilt/S.:')} ${escapeHtml(p['Cilt/sayfa'] || '-')} | ${currentLanguage === 'en' ? 'No.:' : 'No:'} <strong>${escapeHtml(p['Numara'] || '-')}</strong></span>
                     </div>
-                    <div><strong>Ortak Râvi / Tarik:</strong> ${escapeHtml(p['Kesişme noktası (ortak râvi / tarik)'] || '—')}</div>
-                    <div><strong>Lafız İlişkisi:</strong> <span class="text-emerald-800 font-medium">${escapeHtml(p['Lafız ilişkisi'] || '—')}</span></div>
-                    ${p['Not'] ? `<div class="text-gray-600 pt-1"><strong>Not:</strong> ${escapeHtml(p['Not'])}</div>` : ''}
+                    <div><strong>${t('Ortak Râvi / Tarik:')}</strong> ${escapeHtml(p['Kesişme noktası (ortak râvi / tarik)'] || '—')}</div>
+                    <div><strong>${t('Lafız İlişkisi:')}</strong> <span class="text-emerald-800 font-medium">${escapeHtml(p['Lafız ilişkisi'] || '—')}</span></div>
+                    ${hasText(p['Not']) ? `<div class="text-gray-600 pt-1"><strong>${t('Not:')}</strong> ${escapeHtml(p['Not'])}</div>` : ''}
                   </div>`).join('')}
               </div>`}
           </div>`;
