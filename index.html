@@ -824,29 +824,28 @@
     document.getElementById('belgeSehirFilter').addEventListener('change', renderBelgeler);
     document.getElementById('belgeSearch').addEventListener('keydown', e => { if (e.key === 'Enter') renderBelgeler(); });
 
-    function parseDigitalImage(raw) {
-      const rawImgUrl = String(raw || '').trim();
-      if (!rawImgUrl || rawImgUrl === '—' || rawImgUrl === '-') {
-        return { url: '', isUnavailable: false, raw: '' };
-      }
-      const isUnavailable = /çevrimiçi görüntü yok|çevrimiçi görüntü tespit edilmedi|katalog:|dclp\/tm/i.test(rawImgUrl);
-      let imgUrl = '';
-      if (!isUnavailable) {
-        const urlMatch = rawImgUrl.match(/^https:\/\/[^\s)>,;]+$/i) || rawImgUrl.match(/https:\/\/[^\s)>,;]+/i);
-        if (urlMatch) {
-          try {
-            const parsed = new URL(urlMatch[0]);
-            if (parsed.protocol === 'https:') {
-              imgUrl = parsed.href;
-            }
-          } catch (_) { /* geçersiz bağlantı gösterilmez */ }
+    function parseDigitalImage(belge) {
+      const raw = String(belge['Dijital görüntü'] ?? belge['Dijital Görüntü'] ?? '').trim();
+      if (!raw || raw === '—' || raw === '-') return { url: '', raw: '' };
+
+      const withoutCatalog = raw.split(/\bkatalog\s*:|\bdclp\s*\/\s*tm\b/iu, 1)[0];
+      const unavailable = /(?:çevrimiçi |dijital )?görüntü\s+(?:yok\b|bulunamadı\b|tespit edilmedi\b)|no (?:online |digital )?image\b/iu;
+      if (unavailable.test(withoutCatalog)) return { url: '', raw };
+
+      const candidates = withoutCatalog.match(/https?:\/\/[^\s<>"|]+/gi) || [];
+      for (const candidate of candidates) {
+        try {
+          const url = new URL(candidate.replace(/[),.;\]]+$/u, ''));
+          if (!url.username && !url.password) return { url: url.href, raw };
+        } catch (_) {
+          // Try the next address if this one is malformed.
         }
       }
-      return { url: imgUrl, isUnavailable, raw: rawImgUrl };
+      return { url: '', raw };
     }
 
     function belgeCard(b) {
-      const { url: imgUrl, isUnavailable, raw: rawImgUrl } = parseDigitalImage(b['Dijital görüntü']);
+      const { url: imgUrl, raw: rawImgUrl } = parseDigitalImage(b);
       return `
         <div class="bg-white p-5 rounded-xl border border-amber-200/90 shadow-sm flex flex-col justify-between">
           <div>
@@ -1045,7 +1044,7 @@
               <div><strong>${currentLanguage === 'en' ? 'Material / Format:' : 'Malzeme / Biçim:'}</strong> ${escapeHtml(belge['Malzeme'] || '-')} / ${escapeHtml(belge['Biçim'] || '-')}</div>
               <div><strong>${currentLanguage === 'en' ? 'Contents:' : 'Muhteva:'}</strong> ${escapeHtml(belge['Muhteva'] || '—')}</div>
               ${(() => {
-                const img = parseDigitalImage(belge['Dijital görüntü']);
+                const img = parseDigitalImage(belge);
                 const label = currentLanguage === 'en' ? 'Digital Image / Plate:' : 'Dijital Görüntü / Levha:';
                 if (img.url) {
                   return `<div class="pt-1.5 border-t border-gray-100 flex items-center justify-between gap-2">
