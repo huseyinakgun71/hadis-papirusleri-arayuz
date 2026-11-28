@@ -844,7 +844,7 @@
             <div class="flex items-start justify-between gap-2">
               <div>
                 <span class="text-xs font-bold uppercase tracking-wider text-amber-800 bg-amber-100 px-2 py-0.5 rounded">${escapeHtml(b['Belge kodu'])}</span>
-                ${String(b['Kitapta incelendi (†)'] || '').includes('†') ? `<span class="ml-1 text-xs font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded">${currentLanguage === 'en' ? '† Examined' : '† İncelendi'}</span>` : ''}
+                ${String(b['Kitapta incelendi'] || '').includes('†') ? `<span class="ml-1 text-xs font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded">${currentLanguage === 'en' ? '† Examined' : '† İncelendi'}</span>` : ''}
                 <h3 class="text-base font-bold text-gray-900 mt-1.5">${escapeHtml(b['Koleksiyon'] || b['Belge kodu'])}</h3>
                 <p class="text-xs text-gray-500">${escapeHtml(b['Şehir'])} • ${currentLanguage === 'en' ? 'Inventory:' : 'Envanter:'} ${escapeHtml(b['Envanter'] || '-')}</p>
               </div>
@@ -854,7 +854,7 @@
               <div><strong>${currentLanguage === 'en' ? 'Contents:' : 'Muhteva:'}</strong> ${escapeHtml(b['Muhteva'] || '—')}</div>
               <div><strong>${currentLanguage === 'en' ? 'Material / Format:' : 'Malzeme / Biçim:'}</strong> ${escapeHtml(b['Malzeme'] || '-')} / ${escapeHtml(b['Biçim'] || '-')}</div>
               <div><strong>${currentLanguage === 'en' ? 'Edition:' : 'Neşir:'}</strong> ${escapeHtml(b['Neşir'] || '—')}</div>
-              <div><strong>${currentLanguage === 'en' ? 'Number of reports:' : 'Rivayet Sayısı:'}</strong> ${t('Ek 1:')} ${escapeHtml(b['Rivayet sayısı (Ek 1)'] || '-')} | ${t('Veritabanı:')} ${escapeHtml(b['Veritabanındaki rivayet satırı'] || '0')}</div>
+              <div><strong>${currentLanguage === 'en' ? 'Number of reports:' : 'Rivayet Sayısı:'}</strong> ${t('Ek 1:')} ${escapeHtml(b['Ek 1 rivayet sayısı'] || '-')} | ${t('Veritabanı:')} ${escapeHtml(b['Veritabanı rivayet sayısı'] || '0')}</div>
               ${hasText(b['Not']) ? `<div class="text-gray-600 pt-1 border-t border-stone-200"><strong>${t('Not:')}</strong> ${escapeHtml(b['Not'])}</div>` : ''}
             </div>
           </div>
@@ -913,7 +913,7 @@
           <div class="text-xs text-gray-700 space-y-1 bg-stone-50 p-3 rounded-lg">
             <div><strong>${currentLanguage === 'en' ? 'Region:' : 'Bölge:'}</strong> ${escapeHtml(r['Bölge'] || '—')}</div>
             <div><strong>${currentLanguage === 'en' ? 'Taqrīb (Ibn Ḥajar):' : 'Takrîb (İbn Hacer):'}</strong> ${escapeHtml(r['Takrîb (İbn Hacer)'] || '—')}</div>
-            <div><strong>${currentLanguage === 'en' ? 'Documents in which it appears:' : 'Geçtiği Belgeler:'}</strong> <span class="text-amber-900 font-medium">${escapeHtml(r['Papirüs isnadlarında geçtiği belgeler (rivayet; otomatik, aday eşleşme)'] || '—')}</span></div>
+            <div><strong>${currentLanguage === 'en' ? 'Documents in which it appears:' : 'Geçtiği Belgeler:'}</strong> <span class="text-amber-900 font-medium">${escapeHtml(r['Geçtiği belgeler'] || '—')}</span></div>
           </div>
           ${hasText(r['Kaynak / not']) ? `<div class="text-xs text-gray-500">${escapeHtml(r['Kaynak / not'])}</div>` : ''}
         </div>`;
@@ -999,7 +999,7 @@
           <div class="space-y-3">
             <div class="bg-stone-50 p-4 rounded-xl border border-stone-200">
               <div class="text-xs font-bold text-stone-500 uppercase mb-1">${t('İsnad (Papirüsteki Okuma)')}</div>
-              <div class="arabic-text text-stone-800">${escapeHtml(r['İsnad (Arapça, papirüsteki okuma)'] || '—')}</div>
+              <div class="arabic-text text-stone-800">${escapeHtml(r['İsnad (papirüs)'] || '—')}</div>
               <div class="text-xs text-stone-600 mt-2 pt-2 border-t border-stone-200"><strong>${t('Transkripsiyon:')}</strong> ${escapeHtml(r['İsnad (transkripsiyon)'] || '—')}</div>
             </div>
             <div class="bg-amber-50 p-4 rounded-xl border border-amber-200">
@@ -1007,7 +1007,7 @@
                 <span>${t("Tarafü'l-Hadîs (Arapça)")}</span>
                 <span>${t('Başın Kaynağı:')} ${escapeHtml(r['Başın kaynağı'] || '-')}</span>
               </div>
-              <div class="arabic-text text-gray-950 font-bold">${escapeHtml(r["Tarafü'l-hadîs (Arapça)"] || '—')}</div>
+              <div class="arabic-text text-gray-950 font-bold">${escapeHtml(r["Tarafü'l-hadîs (papirüs)"] || '—')}</div>
             </div>
           </div>
 
@@ -1016,7 +1016,7 @@
               <h4 class="font-bold text-gray-800 text-sm mb-2">${t('Filolojik ve Neşir Bilgileri')}</h4>
               <div><strong>${t('Neşirdeki No:')}</strong> ${escapeHtml(r['Neşirdeki no.'] || '—')}</div>
               <div><strong>${t('Kâil / Sahâbî:')}</strong> ${escapeHtml(r['Kâil'] || '—')}</div>
-              <div><strong>${t('Rivayet Türü:')}</strong> ${escapeHtml(r['Tür (M/Mv/Mk)'] || '—')}</div>
+              <div><strong>${t('Rivayet Türü:')}</strong> ${escapeHtml(r['Tür'] || '—')}</div>
               <div><strong>${t('Esas Okuma:')}</strong> ${escapeHtml(r['Okuma'] || '—')}</div>
               <div><strong>${t('Tamamlama Usulü:')}</strong> ${escapeHtml(r['Tamamlama'] || '—')}</div>
               <div><strong>${t('Kontrol Durumu:')}</strong> ${escapeHtml(r['Kontrol durumu'] || '—')} (${escapeHtml(r['Kontrol düzeyi'] || '-')})</div>
@@ -1046,7 +1046,7 @@
                       <span class="font-bold text-amber-950 text-sm">${escapeHtml(p['Eser'] || '')}</span>
                       <span class="bg-white px-2 py-0.5 rounded border border-gray-300 font-medium">${t('Cilt/S.:')} ${escapeHtml(p['Cilt/sayfa'] || '-')} | ${currentLanguage === 'en' ? 'No.:' : 'No:'} <strong>${escapeHtml(p['Numara'] || '-')}</strong></span>
                     </div>
-                    <div><strong>${t('Ortak Râvi / Tarik:')}</strong> ${escapeHtml(p['Kesişme noktası (ortak râvi / tarik)'] || '—')}</div>
+                    <div><strong>${t('Ortak Râvi / Tarik:')}</strong> ${escapeHtml(p['Kesişme noktası'] || '—')}</div>
                     <div><strong>${t('Lafız İlişkisi:')}</strong> <span class="text-emerald-800 font-medium">${escapeHtml(p['Lafız ilişkisi'] || '—')}</span></div>
                     ${hasText(p['Not']) ? `<div class="text-gray-600 pt-1"><strong>${t('Not:')}</strong> ${escapeHtml(p['Not'])}</div>` : ''}
                   </div>`).join('')}
