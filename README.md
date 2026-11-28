@@ -1,4 +1,4 @@
-# Hadis Papirüsleri Veri Tabanı · Hadith Papyri Database
+# Hadis Papirüsleri Veri Tabanı (HPVT) · Hadith Papyri Database (HPD)
 
 [**Veri tabanını aç / Open the database**](https://huseyinakgun71.github.io/hadis-papirusleri-arayuz/)
 
