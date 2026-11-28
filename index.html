@@ -875,10 +875,12 @@
       const unavailable = /(?:çevrimiçi |dijital )?görüntü\s+(?:yok\b|bulunamadı\b|tespit edilmedi\b)|no (?:online |digital )?image\b/iu;
       if (unavailable.test(withoutCatalog)) return { url: '', raw };
 
-      const candidates = withoutCatalog.match(/https?:\/\/[^\s<>"|]+/gi) || [];
+      const candidates = withoutCatalog.match(/(?:https?:\/\/|(?:[a-z0-9-]+\.)+(?:edu|org|ac\.at|fr|de|uk|info|com|net)\/)[^\s<>"|]+/gi) || [];
       for (const candidate of candidates) {
         try {
-          const url = new URL(candidate.replace(/[),.;\]]+$/u, ''));
+          const cleaned = candidate.replace(/[),.;\]]+$/u, '');
+          const normalized = /^https?:\/\//i.test(cleaned) ? cleaned : 'https://' + cleaned;
+          const url = new URL(normalized);
           if (!url.username && !url.password) return { url: url.href, raw };
         } catch (_) {
           // Try the next address if this one is malformed.
